@@ -4,42 +4,103 @@
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>@ViewData["Title"] - PrimeGames</title>
-    <link rel="stylesheet" href="~/lib/bootstrap/dist/css/bootstrap.min.css" />
+
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+Thai:wght@100..900&display=swap" rel="stylesheet">
+
     <link rel="stylesheet" href="~/css/site.css" asp-append-version="true" />
     <link rel="stylesheet" href="~/PrimeGames.styles.css" asp-append-version="true" />
+    <link rel="stylesheet" href="~/css/output.css" asp-append-version="true" />
 </head>
-<body>
-    <header>
-        <nav class="navbar navbar-expand-sm navbar-toggleable-sm navbar-light bg-white border-bottom box-shadow mb-3">
-            <div class="container-fluid">
-                <a class="navbar-brand" asp-area="" asp-controller="Home" asp-action="Index">PrimeGames</a>
-                <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target=".navbar-collapse" aria-controls="navbarSupportedContent"
-                        aria-expanded="false" aria-label="Toggle navigation">
-                    <span class="navbar-toggler-icon"></span>
-                </button>
-                <div class="navbar-collapse collapse d-sm-inline-flex justify-content-between">
-                    <ul class="navbar-nav flex-grow-1">
-                        <li class="nav-item">
-                            <a class="nav-link text-dark" asp-area="" asp-controller="Home" asp-action="Index">Home</a>
+<body class="font-thai bg-gray-50 min-h-screen flex flex-col">
+    <header class="bg-white border-b border-gray-200">
+        <nav class="container mx-auto px-6 py-4">
+            <div class="flex items-center justify-between">
+                <div class="flex items-center">
+                    <a asp-area="" asp-controller="Home" asp-action="Index"
+                       class="text-2xl font-bold text-lime-600 hover:text-lime-800 transition-colors">
+                        PrimeGames
+                    </a>
+                </div>
+
+                <div class="hidden md:flex items-center space-x-8">
+                    <ul class="flex items-center space-x-8">
+                        <li>
+                            <a asp-area="" asp-controller="Home" asp-action="Index"
+                               class="text-gray-700 hover:text-lime-600 transition-colors font-medium">Home</a>
                         </li>
-                        <li class="nav-item">
-                            <a class="nav-link text-dark" asp-area="" asp-controller="Home" asp-action="Privacy">Privacy</a>
+                        <li>
+                            <a asp-area="" asp-controller="" asp-action=""
+                               class="text-gray-700 hover:text-lime-600 transition-colors font-medium">News</a>
+                        </li>
+                        <li>
+                            <a asp-area="" asp-controller="" asp-action=""
+                               class="text-gray-700 hover:text-lime-600 transition-colors font-medium">Article</a>
+                        </li>
+                        <li>
+                            <a asp-area="" asp-controller="" asp-action=""
+                               class="text-gray-700 hover:text-lime-600 transition-colors font-medium">Review</a>
+                        </li>
+                        <li>
+                            <a asp-area="" asp-controller="" asp-action=""
+                               class="text-gray-700 hover:text-lime-600 transition-colors font-medium">Mod</a>
+                        </li>
+                        <li>
+                            <a asp-area="" asp-controller="" asp-action=""
+                               class="text-gray-700 hover:text-lime-600 transition-colors font-medium">Deal</a>
                         </li>
                     </ul>
+                </div>
+
+                <div class="flex items-center">
                     <partial name="_LoginPartial" />
+                </div>
+
+                <div class="md:hidden">
+                    <button type="button"
+                            class="text-gray-700 hover:text-blue-600 focus:outline-none focus:text-blue-600"
+                            onclick="toggleMobileMenu()">
+                        <svg class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                  d="M4 6h16M4 12h16M4 18h16" />
+                        </svg>
+                    </button>
+                </div>
+            </div>
+
+            <div id="mobile-menu" class="md:hidden hidden mt-4 pb-4 border-t border-gray-200">
+                <div class="flex flex-col space-y-3 pt-4">
+                    <a asp-area="" asp-controller="Home" asp-action="Index"
+                       class="text-gray-700 hover:text-blue-600 transition-colors font-medium py-2">Home</a>
+                    <a asp-area="" asp-controller="" asp-action=""
+                       class="text-gray-700 hover:text-blue-600 transition-colors font-medium py-2">News</a>
+                    <a asp-area="" asp-controller="" asp-action=""
+                       class="text-gray-700 hover:text-blue-600 transition-colors font-medium py-2">Article</a>
+                    <a asp-area="" asp-controller="" asp-action=""
+                       class="text-gray-700 hover:text-blue-600 transition-colors font-medium py-2">Review</a>
+                    <a asp-area="" asp-controller="" asp-action=""
+                       class="text-gray-700 hover:text-blue-600 transition-colors font-medium py-2">Mod</a>
+                    <a asp-area="" asp-controller="" asp-action=""
+                       class="text-gray-700 hover:text-blue-600 transition-colors font-medium py-2">Deal</a>
                 </div>
             </div>
         </nav>
     </header>
-    <div class="container">
-        <main role="main" class="pb-3">
-            @RenderBody()
-        </main>
-    </div>
 
-    <footer class="border-top footer text-muted">
-        <div class="container">
-            &copy; 2025 - PrimeGames - <a asp-area="" asp-controller="Home" asp-action="Privacy">Privacy</a>
+    <main class="flex-1 container mx-auto px-6 py-8">
+        <div class="max-w-7xl mx-auto">
+            @RenderBody()
+        </div>
+    </main>
+
+    <footer class="bg-white border-t border-gray-200 mt-auto">
+        <div class="container mx-auto px-6 py-8">
+            <div class="flex flex-col md:flex-row justify-between items-center">
+                <div class="flex flex-col md:flex-row items-center space-y-2 md:space-y-0 md:space-x-6 text-sm text-gray-600">
+                    <span class="justify-center">&copy; 2025 PrimeGames. All rights reserved.</span>
+                </div>
+            </div>
         </div>
     </footer>
     <script src="~/lib/jquery/dist/jquery.min.js"></script>
