@@ -15,4 +15,8 @@
     <PackageReference Include="Microsoft.EntityFrameworkCore.Tools" Version="8.0.18" />
   </ItemGroup>
 
+	<Target Name="BuildTailwind" BeforeTargets="Build">
+		<Exec Command="npm run build:tailwind" />
+	</Target>
+
 </Project>
