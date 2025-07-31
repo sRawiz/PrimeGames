@@ -1,0 +1,476 @@
+@model IEnumerable<cleanNETCoreMVC.Models.Content>
+@using cleanNETCoreMVC.Models;
+
+@{
+    ViewData["Title"] = "จัดการเนื้อหา";
+}
+
+<div class="admin-nav flex justify-center mt-6 mb-8">
+    <div class="flex gap-2 bg-white rounded-xl px-6 py-3">
+        <div class="admin-nav-item">
+            <a href="/Admin/Dashboard/Index"
+                class="admin-nav-link flex items-center gap-2 px-4 py-2 rounded-lg font-semibold text-gray-500 hover:text-lime-600 hover:bg-gray-100 transition @((ViewContext.RouteData.Values["controller"]?.ToString() == "Dashboard") ? "bg-lime-100 text-lime-700" : "")">
+                <i class="bi bi-speedometer2"></i><span>แดชบอร์ด</span>
+            </a>
+        </div>
+        <div class="admin-nav-item">
+            <a href="/Admin/Content/Index"
+                class="admin-nav-link flex items-center gap-2 px-4 py-2 rounded-lg font-semibold text-gray-500 hover:text-lime-600 hover:bg-gray-100 transition @((ViewContext.RouteData.Values["controller"]?.ToString() == "Content") ? "bg-lime-100 text-lime-700" : "")">
+                <i class="bi bi-newspaper"></i><span>จัดการเนื้อหา</span>
+            </a>
+        </div>
+        <div class="admin-nav-item">
+            <a href="/Admin/User/Index"
+                class="admin-nav-link flex items-center gap-2 px-4 py-2 rounded-lg font-semibold text-gray-500 hover:text-lime-600 hover:bg-gray-100 transition @((ViewContext.RouteData.Values["controller"]?.ToString() == "User") ? "bg-lime-100 text-lime-700" : "")">
+                <i class="bi bi-people"></i><span>จัดการผู้ใช้</span>
+            </a>
+        </div>
+    </div>
+</div>
+
+<div class="container py-4 h-full flex flex-col flex-1">
+    <div class="flex items-center justify-between mb-4">
+        <div>
+            <h2 class="text-2xl font-bold text-gray-800">จัดการเนื้อหา</h2>
+            @if (ViewBag.Search != null || ViewBag.Category != null || ViewBag.Tag != null || ViewBag.DateFrom != null || ViewBag.DateTo != null)
+            {
+                <div class="flex items-center gap-2 mt-2">
+                    <span class="text-sm text-gray-600">ผลการค้นหา:</span>
+                    @if (!string.IsNullOrEmpty(ViewBag.Search))
+                    {
+                        <span class="badge badge-outline badge-primary">ค้นหา: "@ViewBag.Search"</span>
+                    }
+                    @if (!string.IsNullOrEmpty(ViewBag.Category))
+                    {
+                        <span class="badge badge-outline badge-secondary">ประเภท: @ViewBag.Category</span>
+                    }
+                    @if (!string.IsNullOrEmpty(ViewBag.Tag))
+                    {
+                        <span class="badge badge-outline badge-accent">แท็ก: "@ViewBag.Tag"</span>
+                    }
+                    @if (!string.IsNullOrEmpty(ViewBag.DateFrom) || !string.IsNullOrEmpty(ViewBag.DateTo))
+                    {
+                        <span class="badge badge-outline badge-info">
+                            วันที่: @(ViewBag.DateFrom ?? "เริ่มต้น") - @(ViewBag.DateTo ?? "ปัจจุบัน")
+                        </span>
+                    }
+                    <a href="/Admin/Content/Index" class="btn btn-xs btn-outline btn-error">ล้างการกรอง</a>
+                </div>
+            }
+        </div>
+        <div class="text-sm text-gray-600">
+            พบ @ViewBag.TotalItems รายการ
+        </div>
+    </div>
+    <div class="bg-white rounded-xl shadow border border-gray-200">
+        <div class="flex flex-row items-center justify-between gap-2 px-4 pt-4 pb-2">
+            <div class="flex flex-row items-center gap-2 flex-1">
+                <label class="input input-bordered flex items-center gap-2 w-56 bg-white shadow">
+                    <svg class="h-5 w-5 text-gray-400" xmlns="http://www.w3.org/2000/svg" fill="none"
+                        viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                            d="M21 21l-4.35-4.35M17 11A6 6 0 1 1 5 11a6 6 0 0 1 12 0Z" />
+                    </svg>
+                    <input id="search-input" type="text" class="grow bg-white text-gray-800" placeholder="ค้นหาข่าว..."
+                        style="min-width: 120px;" value="@ViewBag.Search" />
+                </label>
+            </div>
+            <div class="flex flex-row items-center gap-2">
+                <button class="btn btn-outline btn-primary flex items-center gap-2 text-sm" id="btn-filter">
+                    <i class="bi bi-funnel"></i> กรองเนื้อหา
+                </button>
+                <button class="btn btn-primary flex items-center gap-2 text-sm" id="btn-open-create-modal">
+                    <i class="bi bi-plus-circle"></i> เพิ่มเนื้อหา
+                </button>
+            </div>
+        </div>
+        <div class="overflow-x-auto">
+            <div id="content-table-wrapper">
+                <table class="table w-full text-gray-800 bg-white">
+                    <thead class="text-gray-800 border-b-2 border-gray-200 bg-gray-50">
+                        <tr>
+                            <th class="text-gray-800">รูปภาพ</th>
+                            <th class="text-gray-800">หัวข้อข่าว</th>
+                            <th class="text-gray-800">แท็ก</th>
+                            <th class="text-gray-800">ประเภท</th>
+                            <th class="text-gray-800">สร้างเมื่อ</th>
+                            <th class="text-gray-800">อัปเดตเมื่อ</th>
+                            <th class="text-center text-gray-800">Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @if (!Model.Any())
+                        {
+                            <tr>
+                                <td colspan="7" class="text-center py-8 text-gray-500">
+                                    <div class="flex flex-col items-center gap-2">
+                                        <i class="bi bi-search text-4xl text-gray-300"></i>
+                                        <p class="text-lg font-medium">ไม่พบข้อมูลที่ค้นหา</p>
+                                        <p class="text-sm">ลองเปลี่ยนเงื่อนไขการค้นหาหรือล้างการกรอง</p>
+                                        <a href="/Admin/Content/Index" class="btn btn-sm btn-primary mt-2">ล้างการกรอง</a>
+                                    </div>
+                                </td>
+                            </tr>
+                        }
+                        else
+                        {
+                            @foreach (var item in Model)
+                            {
+                                <tr class="border-b border-gray-100 bg-white content-row" data-title="@item.Title"
+                                    data-category="@item.Category"
+                                    data-tags="@string.Join(",", item.ContentTags?.Select(ct => ct.Tag.Name) ?? new List<string>())"
+                                    data-date="@item.CreatedAt.ToString("yyyy-MM-dd")">
+                                <td>
+                                    @if (!string.IsNullOrEmpty(item.ThumbnailUrl))
+                                    {
+                                        <img src="@item.ThumbnailUrl" alt="thumb" class="rounded shadow"
+                                            style="width:64px; height:48px; object-fit:cover;" />
+                                    }
+                                </td>
+                                <td class="font-semibold align-middle max-w-[180px] truncate text-gray-800">@item.Title</td>
+                                <td class="align-middle text-gray-800">
+                                    @if (item.ContentTags != null && item.ContentTags.Any())
+                                    {
+                                        <div class="flex flex-wrap gap-1">
+                                            @foreach (var tag in item.ContentTags)
+                                            {
+                                                <span
+                                                    class="badge badge-success badge-outline badge-xs text-green-600 bg-green-50 border-green-300 mr-1 mb-1">@tag.Tag.Name</span>
+                                            }
+                                        </div>
+                                    }
+                                </td>
+                                <td class="text-gray-800">@item.Category</td>
+                                <td class="text-gray-800">@item.CreatedAt.ToString("dd/MM/yyyy")</td>
+                                <td class="text-gray-800">@(item.UpdatedAt.HasValue ?
+                                                            item.UpdatedAt.Value.ToString("dd/MM/yyyy") :
+                                                            "-")</td>
+                            <td class="text-center">
+                                <div class="dropdown dropdown-end bg-white">
+                                    <button tabindex="0" class="btn btn-sm btn-outline btn-primary">Actions <svg
+                                            xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 inline" fill="none"
+                                            viewBox="0 0 24 24" stroke="currentColor">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                                d="M19 9l-7 7-7-7" />
+                                        </svg></button>
+                                    <ul tabindex="0"
+                                        class="dropdown-content menu p-2 shadow bg-base-100 rounded-box w-40 z-50">
+                                        <li><a class="btn-read flex items-center gap-2" href="#" data-id="@item.Id"><i
+                                                    class="bi bi-eye"></i> Read</a></li>
+                                        <li><a class="btn-edit flex items-center gap-2" href="#" data-id="@item.Id"><i
+                                                    class="bi bi-pencil"></i> Edit</a></li>
+                                        <li><a class="btn-delete flex items-center gap-2 text-error" href="#"
+                                                data-id="@item.Id"><i class="bi bi-trash"></i> Delete</a></li>
+                                    </ul>
+                                </div>
+                            </td>
+                        </tr>
+                            }
+                        }
+                    </tbody>
+                </table>
+                @* Pagination *@
+                @if ((ViewBag.TotalPages ?? 0) > 1)
+                {
+                    int totalPages = ViewBag.TotalPages;
+                    int currentPage = ViewBag.CurrentPage;
+                    <div class="flex flex-col items-center gap-2 mt-6 pb-4">
+                        <div class="flex items-center gap-1">
+                            <a class="btn btn-xs btn-circle btn-outline border-gray-300 text-gray-500 hover:bg-white hover:text-primary hover:border-primary hover:shadow-lg transition-all h-8 w-8 p-0 @(currentPage == 1 ? "btn-disabled opacity-50 cursor-not-allowed" : "")"
+                                href="/Admin/Content/Index?page=@(currentPage-1)@(ViewBag.Search != null ? "&search=" + ViewBag.Search : "")@(ViewBag.Category != null ? "&category=" + ViewBag.Category : "")@(ViewBag.Tag != null ? "&tag=" + ViewBag.Tag : "")@(ViewBag.DateFrom != null ? "&dateFrom=" + ViewBag.DateFrom : "")@(ViewBag.DateTo != null ? "&dateTo=" + ViewBag.DateTo : "")" aria-label="Previous" tabindex="@(currentPage == 1 ? "-1" : "0")">
+                                <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 group-hover:text-primary transition-all"
+                                    fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7" />
+                                </svg>
+                            </a>
+                            @for (int i = 1; i <= totalPages; i++)
+                            {
+                                <a class="btn btn-xs btn-circle mx-0.5 transition-all h-8 w-8 p-0 @(i == currentPage ? "btn-primary text-white shadow-lg" : "btn-outline border-gray-300 text-gray-700 hover:bg-white hover:text-primary hover:border-primary hover:shadow-lg")"
+                                    href="/Admin/Content/Index?page=@i@(ViewBag.Search != null ? "&search=" + ViewBag.Search : "")@(ViewBag.Category != null ? "&category=" + ViewBag.Category : "")@(ViewBag.Tag != null ? "&tag=" + ViewBag.Tag : "")@(ViewBag.DateFrom != null ? "&dateFrom=" + ViewBag.DateFrom : "")@(ViewBag.DateTo != null ? "&dateTo=" + ViewBag.DateTo : "")">@i</a>
+                            }
+                            <a class="btn btn-xs btn-circle btn-outline border-gray-300 text-gray-500 hover:bg-white hover:text-primary hover:border-primary hover:border-primary hover:shadow-lg transition-all h-8 w-8 p-0 @(currentPage == totalPages ? "btn-disabled opacity-50 cursor-not-allowed" : "")"
+                                href="/Admin/Content/Index?page=@(currentPage+1)@(ViewBag.Search != null ? "&search=" + ViewBag.Search : "")@(ViewBag.Category != null ? "&category=" + ViewBag.Category : "")@(ViewBag.Tag != null ? "&tag=" + ViewBag.Tag : "")@(ViewBag.DateFrom != null ? "&dateFrom=" + ViewBag.DateFrom : "")@(ViewBag.DateTo != null ? "&dateTo=" + ViewBag.DateTo : "")" aria-label="Next"
+                                tabindex="@(currentPage == totalPages ? "-1" : "0")">
+                                <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 group-hover:text-primary transition-all"
+                                    fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7" />
+                                </svg>
+                            </a>
+                        </div>
+                        <div class="text-xs text-gray-500 mt-1">
+                            Page <span class="font-semibold text-gray-700">@currentPage</span> of <span
+                                class="font-semibold text-gray-700">@totalPages</span>
+                        </div>
+                    </div>
+                }
+            </div>
+        </div>
+
+        <dialog id="contentModal" class="modal" data-theme="light">
+            <div class="modal-box bg-white text-gray-900 w-full max-w-2xl">
+                <h3 class="font-bold text-lg" id="contentModalLabel">Modal</h3>
+                <div class="py-4" id="contentModalBody">
+                </div>
+            </div>
+        </dialog>
+        <dialog id="filterModal" class="modal" data-theme="light">
+            <div class="modal-box bg-white text-gray-900 w-full max-w-lg">
+                <h3 class="font-bold text-lg" id="filterModalLabel">กรองเนื้อหา</h3>
+                <form id="filter-form" class="space-y-4 mt-4">
+                    <div>
+                        <label class="block mb-1">ประเภท</label>
+                        <select id="filter-category" class="select select-bordered w-full">
+                            <option value="">ทั้งหมด</option>
+                            @foreach (var cat in Enum.GetValues(typeof(cleanNETCoreMVC.Models.ContentCategory)))
+                            {
+                                <option value="@cat" @(ViewBag.Category?.ToString() == cat.ToString() ? "selected" : "")>@cat</option>
+                            }
+                        </select>
+                    </div>
+                    <div>
+                        <label class="block mb-1">แท็ก</label>
+                        <input id="filter-tag" type="text" class="input input-bordered w-full"
+                            placeholder="พิมพ์ชื่อ tag หรือเว้นว่าง = ทั้งหมด" value="@ViewBag.Tag" />
+                    </div>
+                    <div>
+                        <label class="block mb-1">วันที่สร้าง (ตั้งแต่)</label>
+                        <input id="filter-date-from" type="date" class="input input-bordered w-full" value="@ViewBag.DateFrom" />
+                    </div>
+                    <div>
+                        <label class="block mb-1">วันที่สร้าง (ถึง)</label>
+                        <input id="filter-date-to" type="date" class="input input-bordered w-full" value="@ViewBag.DateTo" />
+                    </div>
+                    <div class="flex gap-2 justify-end">
+                        <button type="button" class="btn" onclick="document.getElementById('filterModal').close()">ยกเลิก</button>
+                        <button type="button" class="btn" id="btn-reset-filter">ล้างค่า</button>
+                        <button type="submit" class="btn btn-primary">กรอง</button>
+                    </div>
+                </form>
+            </div>
+        </dialog>
+    </div>
+@section Scripts {
+        <script>
+            document.getElementById('btn-open-create-modal').addEventListener('click', function () {
+                loadContentModal('@Url.Action("CreateModal", "Content", new { area = "Admin" })', 'เพิ่มเนื้อหา');
+            });
+            document.querySelectorAll('.btn-read').forEach(btn => {
+                btn.addEventListener('click', function () {
+                    const id = this.getAttribute('data-id');
+                    loadContentModal(`@Url.Action("ReadModal", "Content", new { area = "Admin" })?id=${id}`, 'Read Content');
+                });
+            });
+            document.querySelectorAll('.btn-edit').forEach(btn => {
+                btn.addEventListener('click', function () {
+                    const id = this.getAttribute('data-id');
+                    loadContentModal(`@Url.Action("EditModal", "Content", new { area = "Admin" })?id=${id}`, 'Edit Content');
+                });
+            });
+            document.querySelectorAll('.btn-delete').forEach(btn => {
+                btn.addEventListener('click', function () {
+                    const id = this.getAttribute('data-id');
+                    loadContentModal(`@Url.Action("DeleteModal", "Content", new { area = "Admin" })?id=${id}`, 'Delete Content');
+                });
+            });
+            function loadContentModal(url, title) {
+                const modal = document.getElementById('contentModal');
+                try {
+                    if (modal.open) modal.close(); // ปิดก่อนถ้าเปิดอยู่
+                    document.getElementById('contentModalLabel').innerText = title;
+                    document.getElementById('contentModalBody').innerHTML = '<div class="text-center py-5"><span class="loading loading-spinner loading-lg text-primary"></span></div>';
+                    fetch(url)
+                        .then(res => res.text())
+                        .then(html => {
+                            document.getElementById('contentModalBody').innerHTML = html;
+                            bindModalForm();
+                            setupTagInput();
+                        });
+                    modal.showModal();
+                } catch (e) {
+                    alert('เกิดข้อผิดพลาดในการเปิด Modal: ' + e.message);
+                }
+            }
+            function bindModalForm() {
+                const form = document.getElementById('content-form');
+                if (form) {
+                    form.addEventListener('submit', function (e) {
+                        e.preventDefault();
+                        const formData = new FormData(form);
+                        let url = '@Url.Action("CreateAjax", "Content", new { area = "Admin" })';
+                        if (form.querySelector('[name=Id]') && form.querySelector('[name=Id]').value) {
+                            url = '@Url.Action("EditAjax", "Content", new { area = "Admin" })' + '?id=' + form.querySelector('[name=Id]').value;
+                        }
+                        fetch(url, {
+                            method: 'POST',
+                            body: formData
+                        })
+                            .then(res => res.json())
+                            .then(data => {
+                                if (data.success) {
+                                    document.getElementById('contentModal').close();
+                                    reloadContentTable();
+                                } else {
+                                    alert('เกิดข้อผิดพลาด: ' + (data.errors ? data.errors.join('\n') : data.error));
+                                }
+                            });
+                    });
+                }
+                const deleteForm = document.getElementById('delete-form');
+                if (deleteForm) {
+                    deleteForm.addEventListener('submit', function (e) {
+                        e.preventDefault();
+                        const id = deleteForm.querySelector('[name=Id]').value;
+                        fetch('@Url.Action("DeleteAjax", "Content", new { area = "Admin" })' + '?id=' + id, {
+                            method: 'POST'
+                        })
+                            .then(res => res.json())
+                            .then(data => {
+                                if (data.success) {
+                                    document.getElementById('contentModal').close();
+                                    reloadContentTable();
+                                } else {
+                                    alert('เกิดข้อผิดพลาด: ' + (data.errors ? data.errors.join('\n') : data.error));
+                                }
+                            });
+                    });
+                }
+            }
+            function reloadContentTable() {
+                fetch(window.location.pathname)
+                    .then(res => res.text())
+                    .then(html => {
+                        const parser = new DOMParser();
+                        const doc = parser.parseFromString(html, 'text/html');
+                        const newTable = doc.getElementById('content-table-wrapper');
+                        document.getElementById('content-table-wrapper').innerHTML = newTable.innerHTML;
+                        document.querySelectorAll('.btn-read').forEach(btn => {
+                            btn.addEventListener('click', function () {
+                                const id = this.getAttribute('data-id');
+                                loadContentModal(`@Url.Action("ReadModal", "Content", new { area = "Admin" })?id=${id}`, 'Read Content');
+                            });
+                        });
+                        document.querySelectorAll('.btn-edit').forEach(btn => {
+                            btn.addEventListener('click', function () {
+                                const id = this.getAttribute('data-id');
+                                loadContentModal(`@Url.Action("EditModal", "Content", new { area = "Admin" })?id=${id}`, 'Edit Content');
+                            });
+                        });
+                        document.querySelectorAll('.btn-delete').forEach(btn => {
+                            btn.addEventListener('click', function () {
+                                const id = this.getAttribute('data-id');
+                                loadContentModal(`@Url.Action("DeleteModal", "Content", new { area = "Admin" })?id=${id}`, 'Delete Content');
+                            });
+                        });
+                    });
+            }
+
+            function setupTagInput() {
+                const tagInput = document.getElementById('tag-input');
+                const tagBadges = document.getElementById('tag-badges');
+                const tagNamesInput = document.getElementById('TagNames');
+                if (!tagInput || !tagBadges || !tagNamesInput) return;
+                let tags = [];
+                if (tagNamesInput.value) {
+                    tags = tagNamesInput.value.split(',').map(t => t.trim()).filter(t => t);
+                }
+                function renderTags() {
+                    tagBadges.innerHTML = '';
+                    tags.forEach((tag, idx) => {
+                        const badge = document.createElement('span');
+                        badge.className = 'badge bg-lime-600 text-white px-2 py-1 rounded-full flex items-center gap-0 font-medium mr-1 mb-1';
+                        badge.innerHTML = `
+                            <span class="flex items-center">${tag}
+                                <button type="button"
+                                    class="ml-1 text-white hover:text-red-400 focus:outline-none cursor-pointer flex items-center justify-center"
+                                    style="font-size:1em;line-height:1;"
+                                    aria-label="Remove"
+                                    data-idx="${idx}">
+                                    <i class="bi bi-x text-base align-middle"></i>
+                                </button>
+                            </span>
+                        `;
+                        tagBadges.appendChild(badge);
+                    });
+                    tagNamesInput.value = tags.join(',');
+                }
+                renderTags();
+                tagInput.onkeydown = function (e) {
+                    if ((e.key === 'Enter' || e.key === ',') && !e.shiftKey) {
+                        e.preventDefault();
+                        let val = tagInput.value.trim();
+                        if (val && !tags.includes(val)) {
+                            tags.push(val);
+                            renderTags();
+                        }
+                        tagInput.value = '';
+                    }
+                };
+                tagBadges.onclick = function (e) {
+                    const btn = e.target.closest('button[data-idx]');
+                    if (btn) {
+                        const idx = btn.getAttribute('data-idx');
+                        tags.splice(idx, 1);
+                        renderTags();
+                    }
+                };
+                const form = document.getElementById('content-form');
+                if (form) {
+                    form.addEventListener('submit', function (e) {
+                        let val = tagInput.value.trim();
+                        if (val && !tags.includes(val)) {
+                            tags.push(val);
+                            renderTags();
+                            tagInput.value = '';
+                        }
+                    });
+                }
+            }
+            document.getElementById('btn-filter').addEventListener('click', function () {
+                const modal = document.getElementById('filterModal');
+                modal.showModal();
+            });
+            document.getElementById('btn-reset-filter').addEventListener('click', function () {
+                document.getElementById('filter-category').value = '';
+                document.getElementById('filter-tag').value = '';
+                document.getElementById('filter-date-from').value = '';
+                document.getElementById('filter-date-to').value = '';
+                applyFilters();
+            });
+            document.getElementById('filter-form').addEventListener('submit', function (e) {
+                e.preventDefault();
+                applyFilters();
+                document.getElementById('filterModal').close();
+            });
+            
+            // Debounce function for search input
+            let searchTimeout;
+            document.getElementById('search-input').addEventListener('input', function () {
+                clearTimeout(searchTimeout);
+                searchTimeout = setTimeout(function() {
+                    applyFilters();
+                }, 500); // Wait 500ms after user stops typing
+            });
+            
+            function applyFilters() {
+                const search = document.getElementById('search-input').value.trim();
+                const category = document.getElementById('filter-category').value;
+                const tag = document.getElementById('filter-tag').value.trim();
+                const dateFrom = document.getElementById('filter-date-from').value;
+                const dateTo = document.getElementById('filter-date-to').value;
+                
+                // Build query parameters
+                const params = new URLSearchParams();
+                if (search) params.append('search', search);
+                if (category) params.append('category', category);
+                if (tag) params.append('tag', tag);
+                if (dateFrom) params.append('dateFrom', dateFrom);
+                if (dateTo) params.append('dateTo', dateTo);
+                
+                // Redirect to filtered results
+                const currentUrl = window.location.pathname;
+                const queryString = params.toString();
+                const fullUrl = queryString ? `${currentUrl}?${queryString}` : currentUrl;
+                window.location.href = fullUrl;
+            }
+        </script>
+}

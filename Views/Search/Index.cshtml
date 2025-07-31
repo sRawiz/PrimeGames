@@ -1,0 +1,93 @@
+@model cleanNETCoreMVC.Models.SearchResultViewModel
+@{
+    ViewData["Title"] = "ค้นหาข่าว";
+    var query = Model.Query;
+    var hasQuery = !string.IsNullOrWhiteSpace(query);
+}
+<div class="container mx-auto max-w-2xl py-8 flex flex-col items-center">
+    <fieldset class="fieldset border-base-300 rounded-box w-full border p-4 mb-8">
+        <legend class="fieldset-legend text-lg font-bold text-primary">ค้นหาข่าว</legend>
+        <form method="get">
+            <div class="join w-full">
+                <input type="text" name="query" value="@query" placeholder="ค้นหาข่าวเกม..." class="input input-bordered join-item w-full text-lg" />
+                <button type="submit" class="btn btn-primary join-item"><i class="bi bi-search"></i></button>
+            </div>
+        </form>
+    </fieldset>
+</div>
+<div class="container mx-auto px-4 py-8">
+    @if (hasQuery)
+    {
+        <h2 class="text-2xl font-bold mb-6">ผลการค้นหา: @query</h2>
+    }
+    @if (Model.Results != null && Model.Results.Count > 0)
+    {
+        <div class="flex flex-col gap-6">
+            @foreach (var item in Model.Results)
+            {
+                var url = $"/{item.Category.ToString().ToLower()}/{item.Slug}";
+                <div class="card lg:card-side bg-base-100 shadow-sm hover:shadow-lg transition">
+                    <figure class="w-full lg:w-64 flex-shrink-0 h-56 lg:h-auto overflow-hidden">
+                        <img src="@(string.IsNullOrEmpty(item.ThumbnailUrl) ? "/wwwroot/img/no-image.png" : item.ThumbnailUrl)"
+                             alt="@item.Title"
+                             class="object-cover w-full h-full min-h-40 max-h-56 lg:max-h-80 aspect-video" />
+                    </figure>
+                    <div class="card-body flex-1 py-4 px-6">
+                        <div class="flex flex-wrap gap-2 mb-2">
+                            <span class="badge badge-primary">@item.Category</span>
+                            @if (item.ContentTags != null)
+                            {
+                                foreach (var ct in item.ContentTags)
+                                {
+                                    if (ct.Tag != null)
+                                    {
+                                        <span class="badge badge-secondary">@ct.Tag.Name</span>
+                                    }
+                                }
+                            }
+                        </div>
+                        <h2 class="card-title text-lg font-semibold mb-1">
+                            <a href="@url" class="hover:underline">@item.Title</a>
+                        </h2>
+                        <p class="text-sm text-gray-500 mb-1">@item.CreatedAt.ToString("dd MMM yyyy")</p>
+                        <p class="line-clamp-2 text-gray-700">@((item.Body?.Length > 120 ? item.Body.Substring(0, 120) + "..." : item.Body))</p>
+                        <div class="card-actions justify-end mt-2">
+                            <a href="@url" class="btn btn-sm btn-outline btn-primary">อ่านต่อ</a>
+                        </div>
+                    </div>
+                </div>
+            }
+        </div>
+    }
+    else if (hasQuery)
+    {
+        <div class="alert alert-warning mt-6">ไม่พบข่าวที่ตรงกับ "@query"</div>
+    }
+    <div class="divider my-10 font-semibold text-lg">คุณอาจสนใจข่าวนี้</div>
+    <div class="w-full max-w-5xl grid grid-cols-1 md:grid-cols-3 gap-6 mx-auto">
+        @if (Model.SuggestNews != null && Model.SuggestNews.Any())
+        {
+            foreach (var news in Model.SuggestNews.Take(3))
+            {
+                var url = $"/{news.Category.ToString().ToLower()}/{news.Slug}";
+                <div class="card bg-base-100 shadow-sm hover:shadow-lg transition">
+                    <figure class="h-32 overflow-hidden rounded-t-xl">
+                        <img src="@(string.IsNullOrEmpty(news.ThumbnailUrl) ? "/wwwroot/img/no-image.png" : news.ThumbnailUrl)" alt="@news.Title" class="object-cover w-full h-full" />
+                    </figure>
+                    <div class="card-body p-4">
+                        <span class="badge badge-primary mb-2">@news.Category</span>
+                        <a href="@url" class="font-semibold text-base hover:underline line-clamp-2">@news.Title</a>
+                        <p class="text-xs text-gray-500 mt-1">@news.CreatedAt.ToString("dd MMM yyyy")</p>
+                        <div class="card-actions justify-end mt-2">
+                            <a href="@url" class="btn btn-xs btn-outline btn-primary">อ่านต่อ</a>
+                        </div>
+                    </div>
+                </div>
+            }
+        }
+        else
+        {
+            <div class="col-span-3 text-center text-gray-400 py-8">ไม่มีข่าวแนะนำ</div>
+        }
+    </div>
+</div> 

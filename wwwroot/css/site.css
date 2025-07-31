@@ -1,0 +1,290 @@
+@import "tailwindcss";
+@plugin "daisyui" {
+  themes: light --default, dark --prefersdark;
+}
+
+html,
+body {
+  font-family: "Noto Sans Thai", sans-serif !important;
+  font-size: 14px;
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(-10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.animate-fade-in {
+  animation: fadeIn 0.3s ease-out;
+}
+
+html {
+  position: relative;
+  min-height: 100%;
+}
+
+@media (min-width: 768px) {
+  html {
+    font-size: 16px;
+  }
+}
+
+.btn:focus,
+.btn:active:focus,
+.btn-link.nav-link:focus,
+.form-control:focus,
+.form-check-input:focus {
+  box-shadow: 0 0 0 0.1rem white, 0 0 0 0.25rem #258cfb;
+}
+
+.pg-app-header {
+  background: var(--color-base-100);
+  border-bottom: 1px solid var(--color-base-300);
+  min-height: 70px;
+  width: 100%;
+  margin: 0;
+  padding: 0;
+}
+
+.pg-header-container {
+  max-width: 1320px;
+  margin: 0 auto;
+  padding: 0 32px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  height: 100px;
+  background: transparent;
+}
+
+.pg-logo-link {
+  text-decoration: none;
+  color: var(--color-primary);
+}
+
+.pg-header-menu {
+  flex: 1 1 auto;
+  display: flex;
+  justify-content: center;
+}
+
+.pg-menu {
+  display: flex;
+  gap: 0.5rem;
+  align-items: center;
+}
+
+.pg-menu-link {
+  font-weight: bold;
+  text-decoration: none;
+  padding: 6px 12px;
+  border-radius: 10px;
+  transition: color 0.2s, background 0.2s;
+  display: inline-block;
+  color: var(--color-base-content);
+}
+
+.pg-menu-link:hover {
+  background: var(--color-base-200);
+  box-shadow: none;
+}
+
+.pg-header-actions {
+  display: flex;
+  gap: 1rem;
+}
+
+.pg-btn {
+  display: inline-block;
+  padding: 8px 24px;
+  border-radius: 6px;
+  font-weight: 600;
+  font-size: 1rem;
+  text-decoration: none;
+  transition: background 0.2s, color 0.2s;
+  border: none;
+}
+
+.pg-main-content {
+  flex: 1 1 auto;
+  min-height: 0;
+  background: transparent;
+  padding: 0;
+}
+
+.pg-container {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 0 32px;
+}
+
+.pg-content-inner {
+  width: 100%;
+}
+
+.pg-footer {
+  background: var(--color-base-100);
+  border-top: 1px solid var(--color-base-300);
+  width: 100%;
+  margin-top: auto;
+  padding: 0;
+}
+
+.pg-footer-container {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 32px 32px;
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+  align-items: center;
+  justify-content: space-between;
+}
+
+@media (min-width: 768px) {
+  .pg-footer-container {
+    flex-direction: row;
+  }
+}
+
+.pg-footer-info {
+  color: var(--color-base-content);
+  opacity: 0.7;
+  font-size: 1rem;
+}
+
+.pg-footer-links {
+  display: flex;
+  gap: 1.5rem;
+}
+
+.pg-footer-link {
+  color: var(--color-primary);
+  text-decoration: none;
+  font-weight: 500;
+  transition: color 0.2s;
+}
+
+.pg-footer-link:hover {
+  color: var(--color-secondary);
+}
+
+.pg-mobile-menu {
+  background: var(--color-base-100);
+  border-top: 1px solid var(--color-base-300);
+  padding: 16px 0 16px 0;
+}
+
+.pg-mobile-menu-list {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  padding-top: 1rem;
+  max-width: 400px;
+  margin: 0 auto;
+}
+
+.pg-mobile-menu-item {
+  padding: 0.5rem 0;
+}
+
+.pg-app-footer {
+  background: var(--color-base-100);
+  border-top: 1px solid var(--color-base-300);
+  width: 100%;
+  margin-top: auto;
+  padding: 0;
+}
+
+.admin-nav {
+  width: 100%;
+  margin-top: 1.5rem;
+  margin-bottom: 2rem;
+}
+
+.admin-nav-link {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.5rem 1.25rem;
+  border-radius: 0.75rem;
+  font-weight: 600;
+  font-size: 1rem;
+  color: var(--color-base-content);
+  opacity: 0.7;
+  background: transparent;
+  text-decoration: none;
+  transition: color 0.2s, background 0.2s;
+  box-shadow: none;
+}
+
+.admin-nav-link:hover,
+.admin-nav-link:focus {
+  background: var(--color-base-200);
+  color: var(--color-primary);
+  text-decoration: none;
+  opacity: 1;
+}
+
+.admin-nav-link.bg-lime-100 {
+  background-color: #84cc16 !important;
+  color: #fff !important;
+  font-weight: bold !important;
+  opacity: 1 !important;
+}
+
+.admin-nav-link.text-lime-700 {
+  color: #fff !important;
+  font-weight: bold !important;
+  opacity: 1 !important;
+}
+
+.pg-login-card, .pg-register-card {
+  width: 500px;
+  box-shadow: none !important;
+  border: 1px solid var(--color-base-300) !important;
+}
+
+.pg-login-card, .pg-register-card {
+  margin-top: 4rem;
+  margin-bottom: 4rem;
+}
+
+.pg-login-container, .pg-register-container {
+  min-height: calc(100vh - 200px);
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  padding: 2rem 0;
+}
+
+.pg-profile-card {
+  min-width: 400px;
+  max-width: 600px;
+  width: 100%;
+  margin-left: auto;
+  margin-right: auto;
+  box-shadow: none !important;
+  border: 1px solid var(--color-base-300) !important;
+}
+
+.pg-profile-card {
+  margin-top: 4rem;
+  margin-bottom: 4rem;
+}
+
+.pg-profile-container {
+  min-height: calc(100vh - 200px);
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  padding: 2rem 0;
+}

@@ -1,0 +1,152 @@
+@model cleanNETCoreMVC.Models.ApplicationUser
+@{
+    ViewData["Title"] = "โปรไฟล์ของฉัน";
+    var avatarUrl = string.IsNullOrWhiteSpace(Model.AvatarUrl)
+        ? "https://ui-avatars.com/api/?name=" + Uri.EscapeDataString((Model.FirstName ?? "") + "+" + (Model.LastName ?? "User")) + "&background=3b82f6&color=ffffff&size=256"
+        : Model.AvatarUrl;
+}
+<div class="pg-profile-container">
+    <div class="pg-profile-card bg-white rounded-3xl p-8 flex flex-col items-center w-full">
+        <h1 class="text-2xl font-bold mb-6 text-center">โปรไฟล์ของฉัน</h1>
+
+        @if (ViewBag.Success == true)
+        {
+            <div class="alert alert-success mb-4 w-full text-center">
+                <span>บันทึกข้อมูลสำเร็จ!</span>
+            </div>
+        }
+
+        <div class="flex flex-col items-center mb-8">
+            <div class="avatar mb-2">
+                <div class="w-32 h-32 rounded-full ring ring-primary ring-offset-base-100 ring-offset-2 overflow-hidden">
+                    <img id="avatar-preview"
+                         src="@avatarUrl"
+                         alt="avatar"
+                         class="object-cover w-full h-full"
+                         onerror="this.src='https://ui-avatars.com/api/?name=@Uri.EscapeDataString((Model.FirstName ?? "") + "+" + (Model.LastName ?? "User"))&background=3b82f6&color=ffffff&size=256'" />
+                </div>
+            </div>
+            <form asp-action="Index" asp-controller="Profile" method="post" enctype="multipart/form-data" class="flex flex-col items-center gap-2 w-full">
+                <label class="btn btn-primary w-48 cursor-pointer mb-2">
+                    <span>เลือกไฟล์รูปโปรไฟล์</span>
+                    <input type="file" name="AvatarFile" id="AvatarFile" accept="image/*" class="hidden" />
+                </label>
+                @if (ViewData.ModelState["AvatarFile"] != null && ViewData.ModelState["AvatarFile"].Errors.Count > 0)
+                {
+                    <span class="text-error text-sm">@ViewData.ModelState["AvatarFile"].Errors[0].ErrorMessage</span>
+                }
+                <div class="flex gap-4 w-full">
+                    <div class="flex-1">
+                        <label class="block font-semibold mb-1">ชื่อ</label>
+                        <input type="text" name="FirstName" class="input input-bordered w-full" value="@Model.FirstName" />
+                        <span asp-validation-for="FirstName" class="text-error"></span>
+                    </div>
+                    <div class="flex-1">
+                        <label class="block font-semibold mb-1">นามสกุล</label>
+                        <input type="text" name="LastName" class="input input-bordered w-full" value="@Model.LastName" />
+                        <span asp-validation-for="LastName" class="text-error"></span>
+                    </div>
+                </div>
+                <div class="w-full">
+                    <label class="block font-semibold mb-1">อีเมล</label>
+                    <input type="email" name="Email" class="input input-bordered w-full" value="@Model.Email" />
+                    <span asp-validation-for="Email" class="text-error"></span>
+                </div>
+                <button type="submit" class="btn btn-success w-48 mt-4">บันทึกข้อมูล</button>
+            </form>
+        </div>
+
+        <div class="w-full bg-gray-50 rounded-xl shadow p-6">
+            <h2 class="text-lg font-bold mb-4">Security info</h2>
+            <div class="divide-y">
+                <div class="flex items-center py-4">
+                    <div class="flex-1">
+                        <div class="font-semibold">Phone</div>
+                        <div class="text-gray-600">@(string.IsNullOrWhiteSpace(Model.PhoneNumber) ? "-" : Model.PhoneNumber ?? "-")</div>
+                    </div>
+                    <button class="btn btn-outline btn-primary" onclick="document.getElementById('changePhoneModal').showModal()">Change</button>
+                </div>
+                <div class="flex items-center py-4">
+                    <div class="flex-1">
+                        <div class="font-semibold">Password</div>
+                    </div>
+                    <button class="btn btn-outline btn-primary" onclick="document.getElementById('changePasswordModal').showModal()">Change</button>
+                </div>
+            </div>
+        </div>
+
+        <dialog id="changePhoneModal" class="modal">
+            <div class="modal-box">
+                <h3 class="font-bold text-lg mb-4">เปลี่ยนเบอร์โทรศัพท์</h3>
+                <form asp-action="ChangePhone" asp-controller="Profile" method="post" class="flex flex-col gap-4">
+                    <div>
+                        <label class="block font-semibold mb-1">เบอร์โทรศัพท์ใหม่</label>
+                        <input type="tel" name="NewPhoneNumber" class="input input-bordered w-full" value="@Model.PhoneNumber ?? string.Empty" />
+                    </div>
+                    @if (ViewBag.PhoneSuccess == true)
+                    {
+                        <div class="alert alert-success mb-2 w-full text-center">เปลี่ยนเบอร์โทรศัพท์สำเร็จ!</div>
+                    }
+                    @if (ViewBag.PhoneError != null)
+                    {
+                        <div class="alert alert-error mb-2 w-full text-center">@Html.Raw(ViewBag.PhoneError)</div>
+                    }
+                    <div class="modal-action">
+                        <button type="submit" class="btn btn-primary">บันทึก</button>
+                        <form method="dialog">
+                            <button class="btn">ปิด</button>
+                        </form>
+                    </div>
+                </form>
+            </div>
+        </dialog>
+
+        <dialog id="changePasswordModal" class="modal">
+            <div class="modal-box">
+                <h3 class="font-bold text-lg mb-4">เปลี่ยนรหัสผ่าน</h3>
+                <form asp-action="ChangePassword" asp-controller="Profile" method="post" class="flex flex-col gap-4">
+                    <div>
+                        <label class="block font-semibold mb-1">รหัสผ่านปัจจุบัน</label>
+                        <input type="password" name="CurrentPassword" class="input input-bordered w-full" />
+                    </div>
+                    <div>
+                        <label class="block font-semibold mb-1">รหัสผ่านใหม่</label>
+                        <input type="password" name="NewPassword" class="input input-bordered w-full" />
+                    </div>
+                    <div>
+                        <label class="block font-semibold mb-1">ยืนยันรหัสผ่านใหม่</label>
+                        <input type="password" name="ConfirmPassword" class="input input-bordered w-full" />
+                    </div>
+                    @if (ViewBag.PasswordSuccess == true)
+                    {
+                        <div class="alert alert-success mb-2 w-full text-center">เปลี่ยนรหัสผ่านสำเร็จ!</div>
+                    }
+                    @if (ViewBag.PasswordError != null)
+                    {
+                        <div class="alert alert-error mb-2 w-full text-center">@Html.Raw(ViewBag.PasswordError)</div>
+                    }
+                    <div class="modal-action">
+                        <button type="submit" class="btn btn-primary">บันทึก</button>
+                        <form method="dialog">
+                            <button class="btn">ปิด</button>
+                        </form>
+                    </div>
+                </form>
+            </div>
+        </dialog>
+    </div>
+
+    <script>
+        document.getElementById('AvatarFile').addEventListener('change', function(e) {
+            const file = e.target.files[0];
+            const preview = document.getElementById('avatar-preview');
+            if (file) {
+                const reader = new FileReader();
+                reader.onload = function(ev) {
+                    preview.src = ev.target.result;
+                };
+                reader.readAsDataURL(file);
+            }
+        });
+    </script>
+</div>

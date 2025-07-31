@@ -1,0 +1,236 @@
+﻿<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>@ViewData["Title"] - PrimeGames</title>
+
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+Thai:wght@100..900&display=swap" rel="stylesheet">
+
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css" />
+
+  <link rel="stylesheet" href="~/css/site.css" asp-append-version="true" />
+  <link rel="stylesheet" href="~/css/themes.css" asp-append-version="true" />
+  <link rel="stylesheet" href="~/PrimeGames.styles.css" asp-append-version="true" />
+  <link rel="stylesheet" href="~/css/output.css" asp-append-version="true" />
+</head>
+
+<body class="font-thai min-h-screen flex flex-col">
+  <div class="pg-app-header">
+    <div class="pg-header-container">
+      <div class="pg-header-logo">
+        <a href="/"
+          class="pg-logo-link font-bold !text-2xl !text-lime-500 hover:!text-lime-600">
+          <span class="pg-logo-title">PrimeGames</span>
+        </a>
+      </div>
+      <div class="pg-header-menu">
+        <div class="pg-menu">
+          <div class="pg-menu-item">
+            <a asp-controller="Content" asp-action="News"
+              class="pg-menu-link !text-gray-500 hover:!text-lime-600 text-base">
+              <span class="pg-menu-title">News</span>
+            </a>
+          </div>
+          <div class="pg-menu-item">
+            <a asp-controller="Content" asp-action="Articles"
+              class="pg-menu-link !text-gray-500 hover:!text-lime-600 text-base">
+              <span class="pg-menu-title">Articles</span>
+            </a>
+          </div>
+          <div class="pg-menu-item">
+            <a asp-controller="Content" asp-action="Reviews"
+              class="pg-menu-link !text-gray-500 hover:!text-lime-600 text-base">
+              <span class="pg-menu-title">Reviews</span>
+            </a>
+          </div>
+          <div class="pg-menu-item">
+            <a asp-controller="Content" asp-action="Mods"
+              class="pg-menu-link !text-gray-500 hover:!text-lime-600 text-base">
+              <span class="pg-menu-title">Mods</span>
+            </a>
+          </div>
+          <div class="pg-menu-item">
+            <a asp-controller="Content" asp-action="Deals"
+              class="pg-menu-link !text-gray-500 hover:!text-lime-600 text-base">
+              <span class="pg-menu-title">Deals</span>
+            </a>
+          </div>
+          <div class="pg-menu-item">
+            <a asp-controller="Content" asp-action="Tips"
+              class="pg-menu-link !text-gray-500 hover:!text-lime-600 text-base">
+              <span class="pg-menu-title">Tips</span>
+            </a>
+          </div>
+          @if (User.IsInRole("Admin"))
+          {
+            <div class="pg-menu-item">
+              <a asp-area="Admin" asp-controller="Dashboard" asp-action="Index"
+                class="pg-menu-link !text-gray-500 hover:!text-lime-600 text-base">
+                <span class="pg-menu-title">Admin</span>
+              </a>
+            </div>
+          }
+        </div>
+      </div>
+      <div class="pg-header-actions flex items-center gap-2">
+        <a href="/search" class="btn btn-ghost btn-circle text-xl" title="ค้นหา">
+          <i class="bi bi-search"></i>
+        </a>
+        
+        <!-- Theme Toggle Button -->
+        <button id="theme-toggle" class="btn btn-ghost btn-circle text-xl" title="สลับธีม">
+          <i id="theme-icon" class="bi bi-sun-fill"></i>
+        </button>
+        
+        <partial name="_LoginPartial" />
+      </div>
+    </div>
+  </div>
+
+  <div id="pg-mobile-menu" class="pg-mobile-menu md:hidden hidden">
+    <div class="pg-mobile-menu-list">
+      <div class="pg-mobile-menu-item"><a href="#" class="pg-menu-link">News</a></div>
+      <div class="pg-mobile-menu-item"><a href="#" class="pg-menu-link">Article</a></div>
+      <div class="pg-mobile-menu-item"><a href="#" class="pg-menu-link">Review</a></div>
+      <div class="pg-mobile-menu-item"><a href="#" class="pg-menu-link">Mod</a></div>
+      <div class="pg-mobile-menu-item"><a href="#" class="pg-menu-link">Deal</a></div>
+      <div class="pg-mobile-menu-item"><a href="#" class="pg-btn pg-btn-outline-success">Register</a></div>
+      <div class="pg-mobile-menu-item"><a href="#" class="pg-btn pg-btn-success">Login</a></div>
+    </div>
+  </div>
+
+  @if (TempData["LoginSuccess"] != null)
+  {
+      <div id="login-success-alert" class="alert alert-success alert-soft fixed top-6 right-6 z-50 shadow-lg w-fit animate-fade-in">
+          <svg xmlns="http://www.w3.org/2000/svg" class="stroke-current shrink-0 h-6 w-6" fill="none" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+          </svg>
+          <span>ลงชื่อเข้าใช้สำเร็จ!</span>
+      </div>
+      <script>
+          setTimeout(() => {
+              document.getElementById('login-success-alert')?.remove();
+          }, 2500);
+      </script>
+  }
+
+  <div class="pg-main-content flex-1 flex flex-col">
+    <div class="pg-container">
+      <div class="pg-content-inner">
+        @RenderBody()
+      </div>
+    </div>
+  </div>
+
+  <div class="pg-app-footer">
+    <div class="pg-footer-container">
+      <div class="pg-footer-info">&copy; 2025 PrimeGames. All rights reserved.</div>
+    </div>
+  </div>
+
+  <script src="~/lib/jquery/dist/jquery.min.js"></script>
+  <script src="~/js/site.js" asp-append-version="true"></script>
+
+
+  <script>
+    function toggleMobileMenu() {
+      const mobileMenu = document.getElementById('mobile-menu');
+      mobileMenu.classList.toggle('hidden');
+    }
+
+    // Theme Management
+    (function() {
+      // Get saved theme from localStorage or default to 'light'
+      const savedTheme = localStorage.getItem('theme') || 'light';
+      
+      // Set the theme on page load
+      document.documentElement.setAttribute('data-theme', savedTheme);
+      
+      // Update theme icon on page load
+      updateThemeIcon(savedTheme);
+      
+      // Add event listener to theme toggle button
+      document.addEventListener('DOMContentLoaded', function() {
+        const themeToggle = document.getElementById('theme-toggle');
+        const themeIcon = document.getElementById('theme-icon');
+        
+        if (themeToggle && themeIcon) {
+          themeToggle.addEventListener('click', function() {
+            const currentTheme = document.documentElement.getAttribute('data-theme');
+            const newTheme = currentTheme === 'dark' ? 'light' : 'dark';
+            
+            // Set the new theme
+            document.documentElement.setAttribute('data-theme', newTheme);
+            
+            // Save to localStorage
+            localStorage.setItem('theme', newTheme);
+            
+            // Update icon
+            updateThemeIcon(newTheme);
+            
+            // Show theme change notification
+            showThemeNotification(newTheme);
+          });
+        }
+      });
+      
+      // Function to update theme icon
+      function updateThemeIcon(theme) {
+        const themeIcon = document.getElementById('theme-icon');
+        if (themeIcon) {
+          if (theme === 'dark') {
+            themeIcon.className = 'bi bi-moon-fill';
+            themeIcon.style.color = '#fbbf24'; // Yellow color for moon
+          } else {
+            themeIcon.className = 'bi bi-sun-fill';
+            themeIcon.style.color = '#f59e0b'; // Orange color for sun
+          }
+        }
+      }
+      
+      // Function to show theme change notification
+      function showThemeNotification(themeName) {
+        // Remove existing notification
+        const existingNotification = document.getElementById('theme-notification');
+        if (existingNotification) {
+          existingNotification.remove();
+        }
+        
+        // Create notification
+        const notification = document.createElement('div');
+        notification.id = 'theme-notification';
+        notification.className = 'alert alert-info fixed top-6 right-6 z-50 shadow-lg w-fit animate-fade-in';
+        notification.innerHTML = `
+          <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" class="stroke-current shrink-0 h-6 w-6">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+          </svg>
+          <span>เปลี่ยนธีมเป็น: ${getThemeDisplayName(themeName)}</span>
+        `;
+        
+        document.body.appendChild(notification);
+        
+        // Remove notification after 2 seconds
+        setTimeout(() => {
+          notification.remove();
+        }, 2000);
+      }
+      
+      // Function to get theme display name
+      function getThemeDisplayName(themeName) {
+        const themeNames = {
+          'light': 'สว่าง',
+          'dark': 'มืด'
+        };
+        return themeNames[themeName] || themeName;
+      }
+    })();
+  </script>
+
+  @await RenderSectionAsync("Scripts", required: false)
+</body>
+
+</html>

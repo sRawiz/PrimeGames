@@ -1,0 +1,12 @@
+@model cleanNETCoreMVC.Models.Content
+<div class="text-center py-6">
+    <h4 class="mb-4">คุณต้องการลบข่าวนี้หรือไม่?</h4>
+    <div class="mb-3 font-bold text-lg">@Model.Title</div>
+    <form id="delete-form" class="flex flex-col items-center gap-4">
+        <input type="hidden" name="Id" value="@Model.Id" />
+        <div class="flex gap-2 justify-center">
+            <button type="submit" class="btn btn-error">ลบ</button>
+            <button type="button" class="btn btn-ghost" onclick="document.getElementById('contentModal').close()">ยกเลิก</button>
+        </div>
+    </form>
+</div> 

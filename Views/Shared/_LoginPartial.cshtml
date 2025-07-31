@@ -1,0 +1,31 @@
+﻿@using Microsoft.AspNetCore.Identity
+@inject SignInManager<cleanNETCoreMVC.Models.ApplicationUser> SignInManager
+@inject UserManager<cleanNETCoreMVC.Models.ApplicationUser> UserManager
+
+@if (SignInManager.IsSignedIn(User))
+{
+    var user = await UserManager.GetUserAsync(User);
+    var avatarUrl = string.IsNullOrWhiteSpace(user?.AvatarUrl) ? "/wwwroot/img/no-image.png" : user.AvatarUrl;
+    var displayName = string.IsNullOrWhiteSpace(user?.FirstName) ? User.Identity?.Name : user.FirstName + " " + user.LastName;
+    <div class="dropdown dropdown-end">
+        <div tabindex="0" role="button" class="avatar online">
+            <div class="w-10 md:w-12 ring-primary ring-offset-base-100 rounded-full ring-2 ring-offset-2">
+                <img src="@avatarUrl" alt="avatar" />
+            </div>
+        </div>
+        <ul tabindex="0" class="dropdown-content z-[1] menu p-2 shadow bg-base-100 rounded-box w-52 mt-2">
+            <li><a href="/profile"><i class="bi bi-person-circle"></i> โปรไฟล์</a></li>
+            <li><a href="/favorites"><i class="bi bi-heart"></i> รายการที่ชอบ</a></li>
+            <li>
+                <form asp-area="Identity" asp-page="/Account/Logout" asp-route-returnUrl="@Url.Action("Index", "Home", new { area = "" })" method="post">
+                    <button type="submit" class="w-full text-left"><i class="bi bi-box-arrow-right"></i> ออกจากระบบ</button>
+                </form>
+            </li>
+        </ul>
+    </div>
+}
+else
+{
+    <a asp-area="Identity" asp-page="/Account/Login"
+        class="pg-btn pg-btn-success !text-white !bg-lime-500 hover:!bg-lime-600 !font-bold !text-base">Login</a>
+}

@@ -1,0 +1,14 @@
+{
+  "dependencies": {
+    "@tailwindcss/cli": "^4.1.11",
+    "chart.js": "^4.5.0",
+    "tailwindcss": "^4.1.11"
+  },
+  "scripts": {
+    "build:tailwind": "tailwindcss -i ./wwwroot/css/site.css -o ./wwwroot/css/output.css --minify",
+    "watch:tailwind": "tailwindcss -i ./wwwroot/css/site.css -o ./wwwroot/css/output.css --watch"
+  },
+  "devDependencies": {
+    "daisyui": "^5.0.46"
+  }
+}

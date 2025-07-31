@@ -1,0 +1,45 @@
+﻿@page
+@model RegisterModel
+@{
+    ViewData["Title"] = "Register";
+}
+<div class="pg-register-container">
+    <div class="card pg-register-card bg-white rounded-3xl">
+        <div class="card-body p-12">
+            <h2 class="text-3xl font-bold text-center mb-2 text-gray-900">Sign up</h2>
+            <p class="text-center text-gray-500 mb-6">
+                Already have an Account ?
+                <a asp-page="./Login" class="font-medium text-lime-600 hover:text-lime-500">Sign in</a>
+            </p>
+            <form id="registerForm" asp-route-returnUrl="@Model.ReturnUrl" method="post" class="flex flex-col gap-6">
+                <div asp-validation-summary="ModelOnly" class="text-red-500 text-sm mb-2" role="alert"></div>
+                <div>
+                    <label asp-for="Input.UserName" class="block text-sm font-medium text-gray-700">Username</label>
+                    <input asp-for="Input.UserName" class="input input-bordered w-full bg-white text-gray-900 border-gray-200 focus:ring-lime-400" autocomplete="username" aria-required="true" placeholder="กรอก Username" />
+                    <span asp-validation-for="Input.UserName" class="text-red-500 text-xs"></span>
+                </div>
+                <div>
+                    <label asp-for="Input.Email" class="block text-sm font-medium text-gray-700">Email</label>
+                    <input asp-for="Input.Email" class="input input-bordered w-full bg-white text-gray-900 border-gray-200 focus:ring-lime-400" autocomplete="email" aria-required="true" placeholder="กรอก Email" />
+                    <span asp-validation-for="Input.Email" class="text-red-500 text-xs"></span>
+                </div>
+                <div>
+                    <label asp-for="Input.Password" class="block text-sm font-medium text-gray-700">Password</label>
+                    <input asp-for="Input.Password" class="input input-bordered w-full bg-white text-gray-900 border-gray-200 focus:ring-lime-400" autocomplete="new-password" aria-required="true" placeholder="กรอก Password" />
+                    <span asp-validation-for="Input.Password" class="text-red-500 text-xs"></span>
+                </div>
+                <div>
+                    <label asp-for="Input.ConfirmPassword" class="block text-sm font-medium text-gray-700">Confirm Password</label>
+                    <input asp-for="Input.ConfirmPassword" class="input input-bordered w-full bg-white text-gray-900 border-gray-200 focus:ring-lime-400" autocomplete="new-password" aria-required="true" placeholder="ยืนยัน Password" />
+                    <span asp-validation-for="Input.ConfirmPassword" class="text-red-500 text-xs"></span>
+                </div>
+                <div>
+                    <button id="registerSubmit" type="submit" class="w-full flex justify-center py-2 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-lime-600 hover:bg-lime-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-lime-400">Sign up</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+@section Scripts {
+    <partial name="_ValidationScriptsPartial" />
+}

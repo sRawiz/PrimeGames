@@ -1,0 +1,43 @@
+@model cleanNETCoreMVC.Models.ApplicationUser
+<h3 class="font-bold text-lg mb-4">เพิ่มผู้ใช้</h3>
+<form id="user-form">
+    <div class="mb-4">
+        <label class="block mb-1 font-semibold">Username</label>
+        <input asp-for="UserName" name="UserName" class="input input-bordered w-full" required />
+    </div>
+    <div class="mb-4">
+        <label class="block mb-1 font-semibold">ชื่อ</label>
+        <input asp-for="FirstName" name="FirstName" class="input input-bordered w-full" required />
+    </div>
+    <div class="mb-4">
+        <label class="block mb-1 font-semibold">นามสกุล</label>
+        <input asp-for="LastName" name="LastName" class="input input-bordered w-full" required />
+    </div>
+    <div class="mb-4">
+        <label class="block mb-1 font-semibold">อีเมล</label>
+        <input asp-for="Email" name="Email" class="input input-bordered w-full" required />
+    </div>
+    <div class="mb-4">
+        <label class="block mb-1 font-semibold">เบอร์โทร</label>
+        <input asp-for="PhoneNumber" name="PhoneNumber" class="input input-bordered w-full" />
+    </div>
+    <div class="mb-4">
+        <label class="block mb-1 font-semibold">วันเกิด</label>
+        <input asp-for="Birthdate" name="Birthdate" type="date" class="input input-bordered w-full" />
+    </div>
+    <div class="mb-4">
+        <label class="block mb-1 font-semibold">รหัสผ่าน</label>
+        <input name="Password" type="password" class="input input-bordered w-full" required />
+    </div>
+    <div class="mb-4">
+        <label class="block mb-1 font-semibold">สิทธิ์</label>
+        <select name="Role" class="select select-bordered w-full">
+            <option value="User">User</option>
+            <option value="Admin">Admin</option>
+        </select>
+    </div>
+    <div class="mt-6 text-right">
+        <button type="button" class="btn mr-2" onclick="document.getElementById('userModal').close()">ยกเลิก</button>
+        <button type="submit" class="btn btn-primary">บันทึก</button>
+    </div>
+</form> 

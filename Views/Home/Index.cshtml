@@ -1,0 +1,139 @@
+﻿@model IEnumerable<cleanNETCoreMVC.Models.Content>
+@using cleanNETCoreMVC.Models;
+
+@functions {
+    public string TimeAgo(DateTime date)
+    {
+        var span = DateTime.UtcNow - date.ToUniversalTime();
+        if (span.TotalDays >= 1) return $"{(int)span.TotalDays}d ago";
+        if (span.TotalHours >= 1) return $"{(int)span.TotalHours}h ago";
+        if (span.TotalMinutes >= 1) return $"{(int)span.TotalMinutes}m ago";
+        return "just now";
+    }
+}
+
+@{
+    ViewData["Title"] = "Home";
+    var allNews = Model?.ToList() ?? new List<Content>();
+    var featuredList = allNews.Take(3).ToList();
+    var latest = allNews.Skip(3).Take(6).ToList();
+    var byCategory = allNews.GroupBy(n => n.Category)
+        .ToDictionary(g => g.Key, g => g.Take(3).ToList());
+    var categoryNames = new Dictionary<ContentCategory, string> {
+        { ContentCategory.News, "News" },
+        { ContentCategory.Article, "Article" },
+        { ContentCategory.Review, "Review" },
+        { ContentCategory.Deal, "Deal" },
+        { ContentCategory.Tip, "Tip" },
+        { ContentCategory.Mod, "Mod" }
+    };
+}
+
+<div class="container mx-auto px-4 py-8">
+    @if (featuredList.Any())
+    {
+        <div class="carousel w-full mb-10 rounded-xl overflow-hidden">
+            @for (int i = 0; i < featuredList.Count; i++)
+            {
+                var item = featuredList[i];
+                var url = $"/{item.Category.ToString().ToLower()}/{item.Slug}";
+                var prevId = $"slide{(i == 0 ? featuredList.Count : i)}";
+                var nextId = $"slide{(i == featuredList.Count - 1 ? 1 : i + 2)}";
+                <div id="slide@(i+1)" class="carousel-item relative w-full">
+                    <div class="relative w-full h-72 md:h-96">
+                        <img src="@(string.IsNullOrEmpty(item.ThumbnailUrl) ? "/wwwroot/img/no-image.png" : item.ThumbnailUrl)" alt="@item.Title" class="object-cover w-full h-full" />
+                        <div class="absolute inset-0 bg-gradient-to-t from-black/80 via-black/40 to-transparent"></div>
+                        <div class="absolute left-0 bottom-0 w-full p-6 flex flex-col gap-3">
+                            <a href="@url" class="font-extrabold text-lg md:text-2xl text-white leading-tight mb-2 px-2 py-1 rounded shadow-lg"
+                               style="background: linear-gradient(90deg, #ff3b3b 0%, #ff9800 60%, #ffe259 100%); background-blend-mode: multiply; opacity:0.95;">
+                                @item.Title
+                            </a>
+                            <div class="flex items-center gap-2">
+                                <span class="badge badge-primary">@item.Category</span>
+                                <span class="text-xs text-white opacity-80">@TimeAgo(item.CreatedAt)</span>
+                                <span class="text-xs text-white opacity-80">@item.Author?.FirstName @item.Author?.LastName</span>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="absolute left-5 right-5 top-1/2 flex -translate-y-1/2 transform justify-between z-10">
+                        <a href="#@prevId" class="btn btn-circle">❮</a>
+                        <a href="#@nextId" class="btn btn-circle">❯</a>
+                    </div>
+                </div>
+            }
+        </div>
+    }
+
+    <div class="mb-10">
+        <div class="flex items-center justify-between mb-4">
+            <h2 class="text-xl font-bold">ข่าวล่าสุด</h2>
+            <a href="/news" class="btn btn-xs btn-outline btn-primary">ดูทั้งหมด</a>
+        </div>
+        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+            @foreach (var item in latest)
+            {
+                var url = $"/{item.Category.ToString().ToLower()}/{item.Slug}";
+                <div class="card bg-base-100 shadow-md hover:shadow-lg transition">
+                    <figure class="h-40 overflow-hidden rounded-t-xl">
+                        <img src="@(string.IsNullOrEmpty(item.ThumbnailUrl) ? "/wwwroot/img/no-image.png" : item.ThumbnailUrl)" alt="@item.Title" class="object-cover w-full h-full" />
+                    </figure>
+                    <div class="card-body p-4">
+                        <span class="badge badge-primary mb-2">@item.Category</span>
+                        <a href="@url" class="font-semibold text-base hover:underline line-clamp-2">@item.Title</a>
+                        <p class="text-xs text-gray-500 mt-1">@item.CreatedAt.ToString("dd MMM yyyy")</p>
+                        <div class="card-actions justify-end mt-2">
+                            <a href="@url" class="btn btn-xs btn-outline btn-primary">อ่านต่อ</a>
+                        </div>
+                    </div>
+                </div>
+            }
+        </div>
+    </div>
+
+    @foreach (var cat in categoryNames.Keys)
+    {
+        var catNews = byCategory.ContainsKey(cat) ? byCategory[cat] : new List<Content>();
+        if (catNews.Count == 0) { continue; }
+        var catUrl = $"/{cat.ToString().ToLower()}";
+        <div class="mb-10">
+            <div class="flex items-center justify-between mb-4">
+                <h2 class="text-xl font-bold">@categoryNames[cat]</h2>
+                <a href="@catUrl" class="btn btn-xs btn-outline btn-primary">ดูทั้งหมด</a>
+            </div>
+            <div class="flex flex-col gap-6">
+                @foreach (var item in catNews)
+                {
+                    var url = $"/{item.Category.ToString().ToLower()}/{item.Slug}";
+                    <div class="card lg:card-side bg-base-100 shadow-sm hover:shadow-lg transition">
+                        <figure class="w-full lg:w-64 flex-shrink-0 h-56 lg:h-auto overflow-hidden">
+                            <img src="@(string.IsNullOrEmpty(item.ThumbnailUrl) ? "/wwwroot/img/no-image.png" : item.ThumbnailUrl)" alt="@item.Title" class="object-cover w-full h-full min-h-40 max-h-56 lg:max-h-80 aspect-video" />
+                        </figure>
+                        <div class="card-body flex-1 py-4 px-6">
+                            <div class="flex flex-wrap gap-2 mb-2">
+                                <span class="badge badge-primary">@item.Category</span>
+                                @if (item.ContentTags != null)
+                                {
+                                    foreach (var ct in item.ContentTags)
+                                    {
+                                        if (ct.Tag != null)
+                                        {
+                                            <span class="badge badge-secondary">@ct.Tag.Name</span>
+                                        }
+                                    }
+                                }
+                            </div>
+                            <h2 class="card-title text-lg font-semibold mb-1">
+                                <a href="@url" class="hover:underline">@item.Title</a>
+                            </h2>
+                            <p class="text-sm text-gray-500 mb-1">@item.CreatedAt.ToString("dd MMM yyyy")</p>
+                            <p class="line-clamp-2 text-gray-700">@((item.Body?.Length > 120 ? item.Body.Substring(0, 120) + "..." : item.Body))</p>
+                            <div class="card-actions justify-end mt-2">
+                                <a href="@url" class="btn btn-sm btn-outline btn-primary">อ่านต่อ</a>
+                            </div>
+                        </div>
+                    </div>
+                }
+            </div>
+        </div>
+    }
+</div>

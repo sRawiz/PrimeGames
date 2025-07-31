@@ -1,0 +1,102 @@
+@model IEnumerable<cleanNETCoreMVC.Models.Favorite>
+@using cleanNETCoreMVC.Models;
+@{
+    ViewData["Title"] = "รายการโปรดของฉัน";
+    var selectedCategory = Context.Request.Query["category"].ToString();
+    var categories = Enum.GetValues(typeof(ContentCategory)).Cast<ContentCategory>().ToList();
+    int pageSize = 10;
+    int page = 1;
+    if (Context.Request.Query.ContainsKey("page"))
+    {
+        int.TryParse(Context.Request.Query["page"], out page);
+        if (page < 1) page = 1;
+    }
+    var filtered = Model.Where(fav => string.IsNullOrEmpty(selectedCategory) || fav.Content?.Category.ToString().ToLower() == selectedCategory).ToList();
+    int total = filtered.Count;
+    int totalPages = (int)Math.Ceiling((double)total / pageSize);
+    var paged = filtered.Skip((page - 1) * pageSize).Take(pageSize).ToList();
+}
+<div class="container mx-auto px-4 py-8">
+    <h1 class="text-2xl font-bold mb-6">รายการโปรดของฉัน</h1>
+    <!-- Filter by Category -->
+    <div class="mb-6 flex flex-wrap gap-2 items-center">
+        <span class="font-semibold">กรองหมวด:</span>
+        <a href="/favorites" class="badge px-4 py-2 cursor-pointer @(string.IsNullOrEmpty(selectedCategory) ? "badge-primary" : "badge-ghost")">ทั้งหมด</a>
+        @foreach (var cat in categories)
+        {
+            var catStr = cat.ToString().ToLower();
+            <a href="/favorites?category=@catStr" class="badge px-4 py-2 cursor-pointer @(selectedCategory == catStr ? "badge-primary" : "badge-ghost")">@cat</a>
+        }
+    </div>
+    @if (!paged.Any())
+    {
+        <div class="alert alert-info">ยังไม่มีข่าวที่ถูกเพิ่มในรายการโปรด</div>
+    }
+    <div class="flex flex-col gap-6">
+        @foreach (var fav in paged)
+        {
+            var item = fav.Content;
+            if (item == null) { continue; }
+            var url = $"/{item.Category.ToString().ToLower()}/{item.Slug}";
+            var modalId = $"modal-fav-{item.Id}";
+            <div class="card lg:card-side bg-base-100 shadow-sm hover:shadow-lg transition">
+                <figure class="w-full lg:w-64 flex-shrink-0 h-56 lg:h-auto overflow-hidden">
+                    <img src="@(string.IsNullOrEmpty(item.ThumbnailUrl) ? "/wwwroot/img/no-image.png" : item.ThumbnailUrl)" alt="@item.Title" class="object-cover w-full h-full min-h-40 max-h-56 lg:max-h-80 aspect-video" />
+                </figure>
+                <div class="card-body flex-1 py-4 px-6">
+                    <div class="flex flex-wrap gap-2 mb-2">
+                        <span class="badge badge-primary">@item.Category</span>
+                        @if (item.ContentTags != null)
+                        {
+                            foreach (var ct in item.ContentTags)
+                            {
+                                if (ct.Tag != null)
+                                {
+                                    <span class="badge badge-secondary">@ct.Tag.Name</span>
+                                }
+                            }
+                        }
+                    </div>
+                    <h2 class="card-title text-lg font-semibold mb-1">
+                        <a href="@url" class="hover:underline">@item.Title</a>
+                    </h2>
+                    <p class="text-sm text-gray-500 mb-1">@item.CreatedAt.ToString("dd MMM yyyy")</p>
+                    <p class="line-clamp-2 text-gray-700">@((item.Body?.Length > 120 ? item.Body.Substring(0, 120) + "..." : item.Body))</p>
+                    <div class="card-actions justify-end mt-2 gap-2">
+                        <button type="button" class="btn btn-sm btn-outline btn-error" onclick="document.getElementById('@modalId').showModal()"><i class="bi bi-x-circle"></i> ลบออก</button>
+                        <a href="@url" class="btn btn-sm btn-outline btn-primary">อ่านต่อ</a>
+                    </div>
+                </div>
+            </div>
+            <!-- Modal ยืนยันการลบ -->
+            <dialog id="@modalId" class="modal">
+                <div class="modal-box">
+                    <h3 class="font-bold text-lg mb-2">ยืนยันการลบรายการโปรด</h3>
+                    <p class="mb-4">คุณต้องการลบข่าวนี้ออกจากรายการโปรดใช่หรือไม่?</p>
+                    <div class="modal-action">
+                        <form asp-action="Remove" asp-controller="Favorites" method="post" asp-route-contentId="@item.Id">
+                            <button type="submit" class="btn btn-error">ยืนยันลบ</button>
+                        </form>
+                        <form method="dialog">
+                            <button class="btn">ยกเลิก</button>
+                        </form>
+                    </div>
+                </div>
+            </dialog>
+        }
+    </div>
+    <!-- Pagination -->
+    @if (total > pageSize)
+    {
+        <div class="mt-8 flex justify-center">
+            <div class="join">
+                <a class="join-item btn btn-sm @(page == 1 ? "btn-disabled" : "")" href="?category=@selectedCategory&page=@(page-1)">«</a>
+                @for (int i = 1; i <= totalPages; i++)
+                {
+                    <a class="join-item btn btn-sm @(page == i ? "btn-active" : "")" href="?category=@selectedCategory&page=@i">@i</a>
+                }
+                <a class="join-item btn btn-sm @(page == totalPages ? "btn-disabled" : "")" href="?category=@selectedCategory&page=@(page+1)">»</a>
+            </div>
+        </div>
+    }
+</div> 

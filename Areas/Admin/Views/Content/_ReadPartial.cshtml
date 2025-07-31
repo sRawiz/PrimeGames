@@ -1,0 +1,25 @@
+@model cleanNETCoreMVC.Models.Content
+@using cleanNETCoreMVC.Models;
+<div class="space-y-4">
+    <div class="flex flex-col md:flex-row gap-4">
+        @if (!string.IsNullOrEmpty(Model.ThumbnailUrl)) {
+            <img src="@Model.ThumbnailUrl" alt="Thumbnail" class="rounded shadow w-48 h-32 object-cover" />
+        }
+        <div>
+            <h3 class="text-xl font-bold mb-1">@Model.Title</h3>
+            <div class="text-gray-500 text-sm mb-2">ประเภท: <span class="font-semibold">@Model.Category</span></div>
+            <div class="text-gray-500 text-sm mb-2">ผู้เขียน: <span class="font-semibold">@Model.Author?.FirstName @Model.Author?.LastName</span></div>
+            <div class="text-gray-500 text-sm mb-2">วันที่สร้าง: @Model.CreatedAt.ToString("dd/MM/yyyy HH:mm")</div>
+            <div class="flex flex-wrap gap-2 mb-2">
+                @if (Model.ContentTags != null && Model.ContentTags.Any()) {
+                    @foreach (var tag in Model.ContentTags) {
+                        <span class="badge bg-lime-600 text-white px-2 py-1 rounded-full">@tag.Tag.Name</span>
+                    }
+                }
+            </div>
+        </div>
+    </div>
+    <div class="prose max-w-none">
+        @Html.Raw(Model.Body)
+    </div>
+</div> 

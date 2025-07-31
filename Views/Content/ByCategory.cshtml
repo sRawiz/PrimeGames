@@ -1,0 +1,99 @@
+@model IEnumerable<cleanNETCoreMVC.Models.Content>
+@using cleanNETCoreMVC.Models;
+
+@{
+    var category = Model.FirstOrDefault()?.Category.ToString() ?? "Category";
+    ViewData["Title"] = $"ข่าวหมวด {category}";
+    var newsList = Model?.ToList() ?? new List<cleanNETCoreMVC.Models.Content>();
+    int pageSize = 10;
+    int totalNews = newsList.Count;
+    int page = 1;
+    if (Context.Request.Query.ContainsKey("page"))
+    {
+        int.TryParse(Context.Request.Query["page"], out page);
+        if (page < 1) page = 1;
+    }
+    string startDate = Context.Request.Query["start"].ToString();
+    string endDate = Context.Request.Query["end"].ToString();
+    DateTime? start = null, end = null;
+    if (DateTime.TryParse(startDate, out var s)) start = s.Date;
+    if (DateTime.TryParse(endDate, out var e)) end = e.Date;
+    var filteredNews = newsList.Where(n => (!start.HasValue || n.CreatedAt.Date >= start) && (!end.HasValue || n.CreatedAt.Date <= end)).ToList();
+    int totalFiltered = filteredNews.Count;
+    int totalPages = (int)Math.Ceiling((double)totalFiltered / pageSize);
+    var pagedNews = filteredNews.Skip((page - 1) * pageSize).Take(pageSize).ToList();
+}
+<div class="container mx-auto px-4 py-8">
+    <!-- Breadcrumb -->
+    <div class="text-sm breadcrumbs mb-4">
+        <ul>
+            <li><a href="/">หน้าหลัก</a></li>
+            <li>หมวดหมู่ : <span class="font-bold">&nbsp;@category</span></li>
+        </ul>
+    </div>
+    <!-- Filter by Date -->
+    <form method="get" class="mb-6 flex flex-wrap gap-2 items-center bg-base-100 p-4 rounded-xl shadow">
+        <span class="font-semibold">กรองวันที่:</span>
+        <input type="date" name="start" class="input input-bordered" value="@startDate" />
+        <span>-</span>
+        <input type="date" name="end" class="input input-bordered" value="@endDate" />
+        <button type="submit" class="btn btn-primary btn-sm">ค้นหา</button>
+        @if (!string.IsNullOrEmpty(startDate) || !string.IsNullOrEmpty(endDate))
+        {
+            <a href="?" class="btn btn-ghost btn-sm">ล้าง</a>
+        }
+    </form>
+    <!-- Title -->
+    <h1 class="text-3xl font-bold mb-6">@ViewData["Title"]</h1>
+    <div class="flex flex-col gap-6">
+        @foreach (var item in pagedNews)
+        {
+            var url = $"/{item.Category.ToString().ToLower()}/{item.Slug}";
+            <div class="card lg:card-side bg-base-100 shadow-sm hover:shadow-lg transition">
+                <figure class="w-full lg:w-64 flex-shrink-0 h-56 lg:h-auto overflow-hidden">
+                    <img src="@(string.IsNullOrEmpty(item.ThumbnailUrl) ? "/wwwroot/img/no-image.png" : item.ThumbnailUrl)"
+                         alt="@item.Title"
+                         class="object-cover w-full h-full min-h-40 max-h-56 lg:max-h-80 aspect-video" />
+                </figure>
+                <div class="card-body flex-1 py-4 px-6">
+                    <div class="flex flex-wrap gap-2 mb-2">
+                        <span class="badge badge-primary">@item.Category</span>
+                        @* Tag badges *@
+                        @if (item.ContentTags != null)
+                        {
+                            foreach (var ct in item.ContentTags)
+                            {
+                                if (ct.Tag != null)
+                                {
+                                    <span class="badge badge-secondary">@ct.Tag.Name</span>
+                                }
+                            }
+                        }
+                    </div>
+                    <h2 class="card-title text-lg font-semibold mb-1">
+                        <a href="@url" class="hover:underline">@item.Title</a>
+                    </h2>
+                    <p class="text-sm text-gray-500 mb-1">@item.CreatedAt.ToString("dd MMM yyyy")</p>
+                    <p class="line-clamp-2 text-gray-700">@((item.Body?.Length > 120 ? item.Body.Substring(0, 120) + "..." : item.Body))</p>
+                    <div class="card-actions justify-end mt-2">
+                        <a href="@url" class="btn btn-sm btn-outline btn-primary">อ่านต่อ</a>
+                    </div>
+                </div>
+            </div>
+        }
+    </div>
+    <!-- Pagination -->
+    @if (totalFiltered > pageSize)
+    {
+        <div class="mt-8 flex justify-center">
+            <div class="join">
+                <a class="join-item btn btn-sm @(page == 1 ? "btn-disabled" : "")" href="?start=@startDate&end=@endDate&page=@(page-1)">«</a>
+                @for (int i = 1; i <= totalPages; i++)
+                {
+                    <a class="join-item btn btn-sm @(page == i ? "btn-active" : "")" href="?start=@startDate&end=@endDate&page=@i">@i</a>
+                }
+                <a class="join-item btn btn-sm @(page == totalPages ? "btn-disabled" : "")" href="?start=@startDate&end=@endDate&page=@(page+1)">»</a>
+            </div>
+        </div>
+    }
+</div> 

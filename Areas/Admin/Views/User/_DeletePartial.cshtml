@@ -1,0 +1,14 @@
+@model cleanNETCoreMVC.Models.ApplicationUser
+<h3 class="font-bold text-lg text-error mb-4">ยืนยันการลบผู้ใช้</h3>
+<form id="delete-user-form" class="flex flex-col gap-4 mt-4">
+    <div class="py-4 text-center">
+        <div class="text-lg mb-2">คุณต้องการลบผู้ใช้ <span class="font-bold">@Model.FirstName @Model.LastName</span> จริงหรือไม่?</div>
+        <div class="text-gray-500">อีเมล: @Model.Email</div>
+        <div class="text-gray-500">เบอร์โทร: @Model.PhoneNumber</div>
+    </div>
+    <div class="flex gap-2 justify-end">
+        <input type="hidden" name="Id" value="@Model.Id" />
+        <button type="button" class="btn" onclick="document.getElementById('deleteUserModal').close()">ยกเลิก</button>
+        <button type="submit" class="btn btn-error">ลบ</button>
+    </div>
+</form> 

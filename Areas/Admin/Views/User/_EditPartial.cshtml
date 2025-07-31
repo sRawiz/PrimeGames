@@ -1,0 +1,49 @@
+@model cleanNETCoreMVC.Models.ApplicationUser
+<div style="color:red; font-size:12px;">DEBUG: Id=@Model.Id | FirstName=@Model.FirstName | LastName=@Model.LastName | Email=@Model.Email</div>
+<h3 class="font-bold text-lg mb-4">แก้ไขผู้ใช้</h3>
+<form id="edit-user-form">
+    <input type="hidden" name="Id" value="@Model.Id" />
+    <input type="hidden" name="UserName" value="@Model.UserName" />
+    <div class="mb-4">
+        <label class="block mb-1 font-semibold">ชื่อ</label>
+        <input name="FirstName" class="input input-bordered w-full" required value="@Model.FirstName" />
+    </div>
+    <div class="mb-4">
+        <label class="block mb-1 font-semibold">นามสกุล</label>
+        <input name="LastName" class="input input-bordered w-full" required value="@Model.LastName" />
+    </div>
+    <div class="mb-4">
+        <label class="block mb-1 font-semibold">อีเมล</label>
+        <input name="Email" class="input input-bordered w-full" required value="@Model.Email" />
+    </div>
+    <div class="mb-4">
+        <label class="block mb-1 font-semibold">เบอร์โทร</label>
+        <input name="PhoneNumber" class="input input-bordered w-full" value="@Model.PhoneNumber" />
+    </div>
+    <div class="mb-4">
+        <label class="block mb-1 font-semibold">วันเกิด</label>
+        <input name="Birthdate" type="date" class="input input-bordered w-full" value="@(Model.Birthdate.HasValue ? Model.Birthdate.Value.ToString("yyyy-MM-dd") : "")" />
+    </div>
+    <div class="mb-4">
+        <label class="block mb-1 font-semibold">รหัสผ่านใหม่ (ถ้าต้องการเปลี่ยน)</label>
+        <input name="Password" type="password" class="input input-bordered w-full" />
+    </div>
+    <div class="mb-4">
+        <label class="block mb-1 font-semibold">สิทธิ์</label>
+        @if (ViewBag.CurrentRole == "User") {
+            <select name="Role" class="select select-bordered w-full">
+                <option value="User" selected>User</option>
+                <option value="Admin">Admin</option>
+            </select>
+        } else {
+            <select name="Role" class="select select-bordered w-full">
+                <option value="User">User</option>
+                <option value="Admin" selected>Admin</option>
+            </select>
+        }
+    </div>
+    <div class="flex gap-2 justify-end mt-6">
+        <button type="button" class="btn" onclick="document.getElementById('editUserModal').close()">ยกเลิก</button>
+        <button type="submit" class="btn btn-primary">บันทึก</button>
+    </div>
+</form> 

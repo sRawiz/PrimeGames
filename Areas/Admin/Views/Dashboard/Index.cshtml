@@ -1,0 +1,256 @@
+@{
+    ViewData["Title"] = "แดชบอร์ด";
+    var totalNews = ViewBag.TotalNews ?? 0;
+    var newsByCategory = ViewBag.NewsByCategory as IEnumerable<dynamic>;
+    var newsToday = ViewBag.NewsToday ?? 0;
+    var totalUsers = ViewBag.TotalUsers ?? 0;
+    var usersToday = ViewBag.UsersToday ?? 0;
+    var totalFavorites = ViewBag.TotalFavorites ?? 0;
+    var totalTags = ViewBag.TotalTags ?? 0;
+    var chartData = ViewBag.ChartData as IEnumerable<dynamic>;
+    var chartLabels = chartData != null
+        ? string.Join(",", chartData.Select(d => $"'{{0:MM-yy}}'".Replace("{{0:MM-yy}}", DateTime.Parse(((string)d.Month) + "-01").ToString("MM-yy"))))
+        : "";
+    var chartCounts = chartData != null
+        ? string.Join(",", chartData.Select(d => d.Count.ToString()))
+        : "";
+}
+<div class="admin-nav flex justify-center mt-6 mb-8">
+    <div class="flex gap-2 bg-white rounded-xl px-6 py-3">
+        <div class="admin-nav-item">
+            <a href="/Admin/Dashboard/Index"
+                class="admin-nav-link flex items-center gap-2 px-4 py-2 rounded-lg font-semibold text-gray-500 hover:text-lime-600 hover:bg-gray-100 transition @((ViewContext.RouteData.Values["controller"]?.ToString() == "Dashboard") ? "bg-lime-100 text-lime-700" : "")">
+                <i class="bi bi-speedometer2"></i><span>แดชบอร์ด</span>
+            </a>
+        </div>
+        <div class="admin-nav-item">
+            <a href="/Admin/Content/Index"
+                class="admin-nav-link flex items-center gap-2 px-4 py-2 rounded-lg font-semibold text-gray-500 hover:text-lime-600 hover:bg-gray-100 transition @((ViewContext.RouteData.Values["controller"]?.ToString() == "Content") ? "bg-lime-100 text-lime-700" : "")">
+                <i class="bi bi-newspaper"></i><span>จัดการเนื้อหา</span>
+            </a>
+        </div>
+        <div class="admin-nav-item">
+            <a href="/Admin/User/Index"
+                class="admin-nav-link flex items-center gap-2 px-4 py-2 rounded-lg font-semibold text-gray-500 hover:text-lime-600 hover:bg-gray-100 transition @((ViewContext.RouteData.Values["controller"]?.ToString() == "User") ? "bg-lime-100 text-lime-700" : "")">
+                <i class="bi bi-people"></i><span>จัดการผู้ใช้</span>
+            </a>
+        </div>
+    </div>
+</div>
+<div class="container mx-auto px-4 py-8">
+    <h1 class="text-3xl font-extrabold mb-8 text-lime-600 flex items-center gap-2"><i class="bi bi-speedometer2"></i>แดชบอร์ด</h1>
+    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8 mb-10">
+        <div class="stat bg-base-100 shadow rounded-xl flex flex-col items-center p-6">
+            <div class="stat-figure text-primary"><i class="bi bi-newspaper text-3xl"></i></div>
+            <div class="stat-title">ข่าวทั้งหมด</div>
+            <div class="stat-value text-primary text-3xl">@totalNews</div>
+            <div class="stat-desc flex items-center gap-2">
+                <span class="text-success font-bold">+@newsToday วันนี้</span>
+            </div>
+        </div>
+        <div class="stat bg-base-100 shadow rounded-xl flex flex-col items-center p-6">
+            <div class="stat-figure text-secondary"><i class="bi bi-people text-3xl"></i></div>
+            <div class="stat-title">ผู้ใช้ทั้งหมด</div>
+            <div class="stat-value text-secondary text-3xl">@totalUsers</div>
+            <div class="stat-desc flex items-center gap-2">
+                <span class="text-success font-bold">+@usersToday วันนี้</span>
+            </div>
+        </div>
+        <div class="stat bg-base-100 shadow rounded-xl flex flex-col items-center p-6">
+            <div class="stat-figure text-warning"><i class="bi bi-tags text-3xl"></i></div>
+            <div class="stat-title">Tag</div>
+            <div class="stat-value text-warning text-3xl">@totalTags</div>
+            <div class="stat-desc">แท็กทั้งหมด</div>
+        </div>
+    </div>
+    <div class="divider my-10 font-semibold text-lg">สรุปภาพรวม</div>
+
+    <div class="grid grid-cols-1 lg:grid-cols-2 gap-8 mb-10">
+        <div class="card bg-base-100 shadow p-6 flex flex-col items-center">
+            <div class="flex items-center gap-2 mb-2">
+                <i class="bi bi-pie-chart-fill text-2xl text-info"></i>
+                <span class="font-bold text-lg">สัดส่วนข่าวแต่ละหมวด</span>
+            </div>
+            <canvas id="categoryChart" width="400" height="260"></canvas>
+        </div>
+        <div class="card bg-base-100 shadow p-6 flex flex-col items-center">
+            <div class="flex items-center gap-2 mb-2">
+                <i class="bi bi-bar-chart-line-fill text-2xl text-success"></i>
+                <span class="font-bold text-lg">แนวโน้มข่าวใหม่ (12 เดือน)</span>
+            </div>
+            <canvas id="newsTrendChart" width="400" height="260"></canvas>
+        </div>
+    </div>
+    <div class="divider my-10 font-semibold text-lg">ข่าวเด่น</div>
+    <div class="grid grid-cols-1 lg:grid-cols-3 gap-8 mb-10 items-start">
+        <div class="col-span-2">
+            <div class="card bg-base-100 shadow p-6 mb-6">
+                <div class="flex items-center gap-2 mb-2">
+                    <i class="bi bi-trophy-fill text-xl text-warning"></i>
+                    <span class="font-bold text-lg">ข่าวยอดนิยม 10 อันดับ</span>
+                </div>
+                <form method="get" class="flex flex-wrap gap-2 items-center mb-4">
+                    <div class="dropdown">
+                        <label tabindex="0" class="btn btn-sm btn-primary m-1">เลือกช่วงเวลา</label>
+                        <ul tabindex="0" class="dropdown-content menu p-2 shadow bg-base-100 rounded-box w-52 z-[1]">
+                            <li><button type="submit" name="range" value="7" class="btn btn-ghost btn-sm w-full text-left">7 วันล่าสุด</button></li>
+                            <li><button type="submit" name="range" value="30" class="btn btn-ghost btn-sm w-full text-left">30 วันล่าสุด</button></li>
+                            <li><button type="submit" name="range" value="year" class="btn btn-ghost btn-sm w-full text-left">ปีนี้</button></li>
+                            <li><button type="submit" name="range" value="all" class="btn btn-ghost btn-sm w-full text-left">ทั้งหมด</button></li>
+                        </ul>
+                    </div>
+                    @if (!string.IsNullOrEmpty(ViewBag.StartDate as string) || !string.IsNullOrEmpty(ViewBag.EndDate as string))
+                    {
+                        <a href="/Admin/Dashboard/Index" class="btn btn-ghost btn-sm">ล้าง</a>
+                    }
+                </form>
+                <div class="overflow-x-auto">
+                    <table class="table table-zebra w-full">
+                        <thead>
+                            <tr>
+                                <th>อันดับ</th>
+                                <th>หัวข้อข่าว</th>
+                                <th>หมวด</th>
+                                <th>ยอดวิว</th>
+                                <th>วันที่</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @if (ViewBag.TopNews != null)
+                            {
+                                var rank = 1;
+                                foreach (var news in ViewBag.TopNews)
+                                {
+                                    <tr>
+                                        <td class="font-bold text-center">@rank</td>
+                                        <td><a href="/@news.Category.ToString().ToLower()/@news.Slug" target="_blank" class="link link-hover text-primary">@news.Title</a></td>
+                                        <td>@news.Category</td>
+                                        <td class="text-center font-semibold text-lime-600">@news.ViewCount</td>
+                                        <td class="text-xs text-gray-500">@((news.CreatedAt as DateTime?) != null ? ((DateTime)news.CreatedAt).ToString("dd/MM/yyyy") : "-")</td>
+                                    </tr>
+                                    rank++;
+                                }
+                            }
+                            else
+                            {
+                                <tr><td colspan="5" class="text-center text-gray-400">ไม่มีข้อมูล</td></tr>
+                            }
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+        <div>
+            <div class="card bg-base-100 shadow p-6">
+                <div class="flex items-center gap-2 mb-2">
+                    <i class="bi bi-lightning-fill text-xl text-info"></i>
+                    <span class="font-bold text-lg">ข่าวล่าสุด 5 รายการ</span>
+                </div>
+                <div class="overflow-x-auto">
+                    <table class="table table-zebra w-full">
+                        <thead>
+                            <tr>
+                                <th>หัวข้อข่าว</th>
+                                <th>หมวด</th>
+                                <th>วันที่</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @if (ViewBag.LatestNews != null)
+                            {
+                                foreach (var news in ViewBag.LatestNews)
+                                {
+                                    <tr>
+                                        <td><a href="/@news.Category.ToString().ToLower()/@news.Slug" target="_blank" class="link link-hover text-primary">@news.Title</a></td>
+                                        <td>@news.Category</td>
+                                        <td class="text-xs text-gray-500">@((news.CreatedAt as DateTime?) != null ? ((DateTime)news.CreatedAt).ToString("dd/MM/yyyy") : "-")</td>
+                                    </tr>
+                                }
+                            }
+                            else
+                            {
+                                <tr><td colspan="3" class="text-center text-gray-400">ไม่มีข้อมูล</td></tr>
+                            }
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+@section Scripts {
+    <script src="~/js/chart.js"></script>
+    <script>
+        var categoryLabels = [];
+        var categoryCounts = [];
+        @if (newsByCategory != null)
+        {
+            foreach (var cat in newsByCategory)
+            {
+                <text>categoryLabels.push('@cat.Category');</text>
+                <text>categoryCounts.push(@cat.Count);</text>
+            }
+        }
+        var ctx = document.getElementById('categoryChart').getContext('2d');
+        var categoryChart = new Chart(ctx, {
+            type: 'doughnut',
+            data: {
+                labels: categoryLabels,
+                datasets: [{
+                    data: categoryCounts,
+                    backgroundColor: [
+                        '#60a5fa', '#fbbf24', '#34d399', '#f87171', '#a78bfa', '#f472b6', '#facc15', '#38bdf8'
+                    ],
+                    borderWidth: 1
+                }]
+            },
+            options: {
+                responsive: true,
+                plugins: {
+                    legend: {
+                        position: 'bottom',
+                        labels: { font: { size: 14 } }
+                    },
+                    tooltip: {
+                        enabled: true
+                    }
+                }
+            }
+        });
+        var trendLabels = [];
+        var trendCounts = [];
+        @if (chartData != null)
+        {
+            foreach (var d in chartData)
+            {
+                var dt = DateTime.Parse(d.Month + "-01");
+                <text>trendLabels.push('@dt.ToString("MMM yy", System.Globalization.CultureInfo.InvariantCulture)');</text>
+                <text>trendCounts.push(@d.Count);</text>
+            }
+        }
+        var ctx2 = document.getElementById('newsTrendChart').getContext('2d');
+        var newsTrendChart = new Chart(ctx2, {
+            type: 'bar',
+            data: {
+                labels: trendLabels,
+                datasets: [{
+                    label: 'จำนวนข่าว',
+                    data: trendCounts,
+                    backgroundColor: '#60a5fa',
+                    borderRadius: 6
+                }]
+            },
+            options: {
+                responsive: true,
+                plugins: {
+                    legend: { display: false },
+                    tooltip: { enabled: true }
+                },
+                scales: {
+                    x: { grid: { display: false }, title: { display: true, text: 'เดือน/ปี' } },
+                    y: { grid: { color: '#eee' }, beginAtZero: true, title: { display: true, text: 'จำนวนข่าว' } }
+                }
+            }
+        });
+    </script>
+}
