@@ -14,7 +14,6 @@ namespace cleanNETCoreMVC.Services
             _logger = logger;
             _uploadsPath = Path.Combine(_environment.WebRootPath, "uploads");
             
-            // Create uploads directory if it doesn't exist
             if (!Directory.Exists(_uploadsPath))
             {
                 Directory.CreateDirectory(_uploadsPath);
@@ -36,20 +35,17 @@ namespace cleanNETCoreMVC.Services
                 if (file.Length > 5 * 1024 * 1024)
                     throw new ArgumentException("File size must be less than 5MB");
 
-                // Generate unique filename with prefix
                 var fileExtension = Path.GetExtension(file.FileName);
                 var fileName = $"thumb_{Guid.NewGuid():N}{fileExtension}";
                 var filePath = Path.Combine(_uploadsPath, fileName);
 
                 _logger.LogInformation("Uploading file locally: {FileName}, Size: {Size} bytes", fileName, file.Length);
 
-                // Save file to wwwroot/uploads
                 using (var stream = new FileStream(filePath, FileMode.Create))
                 {
                     await file.CopyToAsync(stream);
                 }
 
-                // Return relative URL path
                 var relativeUrl = $"/uploads/{fileName}";
                 
                 _logger.LogInformation("File uploaded successfully to local storage: {FileName} -> {RelativeUrl}", fileName, relativeUrl);
@@ -70,7 +66,6 @@ namespace cleanNETCoreMVC.Services
             {
                 if (string.IsNullOrEmpty(imageUrl)) return;
 
-                // Handle both absolute and relative URLs
                 string fileName;
                 if (imageUrl.StartsWith("/uploads/"))
                 {
