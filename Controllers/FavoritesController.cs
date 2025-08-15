@@ -68,7 +68,7 @@ namespace cleanNETCoreMVC.Controllers
             }
             else
             {
-                TempData["FavoriteSuccess"] = "ข่าวนี้ไม่ได้อยู่ในรายการโปรด";
+                TempData["FavoriteSuccess"] = "ข่าวนี้ไม่ได้อยู่ในรายการโปร";
             }
             var referer = Request.Headers["Referer"].FirstOrDefault();
             return Redirect(referer ?? "/");

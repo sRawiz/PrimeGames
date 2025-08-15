@@ -24,30 +24,82 @@ namespace cleanNETCoreMVC.Controllers
         {
             if (!System.Enum.TryParse<ContentCategory>(category, true, out var cat))
                 return NotFound();
-            var content = await _context.Contents
-                .Include(c => c.Author)
-                .Include(c => c.ContentTags).ThenInclude(ct => ct.Tag)
-                .FirstOrDefaultAsync(c => c.Category == cat && c.Slug == slug);
+
+            var contentQuery = from c in _context.Contents
+                              join a in _context.Users on c.AuthorId equals a.Id
+                              where c.Category == cat && c.Slug == slug
+                              select new Content
+                              {
+                                  Id = c.Id,
+                                  Title = c.Title,
+                                  Slug = c.Slug,
+                                  Body = c.Body,
+                                  ThumbnailUrl = c.ThumbnailUrl,
+                                  AuthorId = c.AuthorId,
+                                  Category = c.Category,
+                                  CreatedAt = c.CreatedAt,
+                                  UpdatedAt = c.UpdatedAt,
+                                  ViewCount = c.ViewCount,
+                                  Author = new ApplicationUser
+                                  {
+                                      Id = a.Id,
+                                      FirstName = a.FirstName,
+                                      LastName = a.LastName,
+                                      UserName = a.UserName
+                                  }
+                              };
+
+            var content = await contentQuery.FirstOrDefaultAsync();
             if (content == null) return NotFound();
 
-            // เพิ่มจำนวนการเข้าชม
-            content.ViewCount++;
-            await _context.SaveChangesAsync();
+            var contentTags = await (from ct in _context.ContentTags
+                                   join t in _context.Tags on ct.TagId equals t.Id
+                                   where ct.ContentId == content.Id
+                                   select new ContentTag
+                                   {
+                                       ContentId = ct.ContentId,
+                                       TagId = ct.TagId,
+                                       Tag = new Tag
+                                       {
+                                           Id = t.Id,
+                                           Name = t.Name,
+                                           Slug = t.Slug
+                                       }
+                                   }).ToListAsync();
+            
+            content.ContentTags = contentTags;
+
+            var contentToUpdate = await _context.Contents.FindAsync(content.Id);
+            if (contentToUpdate != null)
+            {
+                contentToUpdate.ViewCount++;
+                await _context.SaveChangesAsync();
+                content.ViewCount = contentToUpdate.ViewCount;
+            }
 
             bool isFavorite = false;
-            if (User.Identity.IsAuthenticated)
+            if (User.Identity?.IsAuthenticated == true)
             {
                 var userId = _userManager.GetUserId(User);
-                isFavorite = await _context.Favorites.AnyAsync(f => f.UserId == userId && f.ContentId == content.Id);
+                if (!string.IsNullOrEmpty(userId))
+                {
+                    isFavorite = await _context.Favorites.AnyAsync(f => f.UserId == userId && f.ContentId == content.Id);
+                }
             }
             ViewBag.IsFavorite = isFavorite;
 
-            // ดึงข่าวอื่นๆ (ยกเว้นข่าวปัจจุบัน)
-            var otherNews = await _context.Contents
-                .Where(c => c.Id != content.Id && c.Category == content.Category)
-                .OrderByDescending(c => c.CreatedAt)
-                .Take(5)
-                .ToListAsync();
+            var otherNews = await (from c in _context.Contents
+                                 where c.Id != content.Id && c.Category == content.Category
+                                 orderby c.CreatedAt descending
+                                 select new Content
+                                 {
+                                     Id = c.Id,
+                                     Title = c.Title,
+                                     Slug = c.Slug,
+                                     ThumbnailUrl = c.ThumbnailUrl,
+                                     Category = c.Category,
+                                     CreatedAt = c.CreatedAt
+                                 }).Take(5).ToListAsync();
             ViewBag.OtherNews = otherNews;
 
             return View("Detail", content);
@@ -58,11 +110,31 @@ namespace cleanNETCoreMVC.Controllers
         {
             if (!System.Enum.TryParse<ContentCategory>(category, true, out var cat))
                 return NotFound();
-            var contents = await _context.Contents
-                .Include(c => c.Author)
-                .Where(c => c.Category == cat)
-                .OrderByDescending(c => c.CreatedAt)
-                .ToListAsync();
+
+            var contents = await (from c in _context.Contents
+                                join a in _context.Users on c.AuthorId equals a.Id
+                                where c.Category == cat
+                                orderby c.CreatedAt descending
+                                select new Content
+                                {
+                                    Id = c.Id,
+                                    Title = c.Title,
+                                    Slug = c.Slug,
+                                    Body = c.Body,
+                                    ThumbnailUrl = c.ThumbnailUrl,
+                                    AuthorId = c.AuthorId,
+                                    Category = c.Category,
+                                    CreatedAt = c.CreatedAt,
+                                    ViewCount = c.ViewCount,
+                                    Author = new ApplicationUser
+                                    {
+                                        Id = a.Id,
+                                        FirstName = a.FirstName,
+                                        LastName = a.LastName,
+                                        UserName = a.UserName
+                                    }
+                                }).ToListAsync();
+                                
             return View("ByCategory", contents);
         }
 
@@ -70,11 +142,37 @@ namespace cleanNETCoreMVC.Controllers
         public async Task<IActionResult> ByTag(string slug)
         {
             var tag = await _context.Tags
-                .Include(t => t.ContentTags).ThenInclude(ct => ct.Content).ThenInclude(c => c.Author)
-                .FirstOrDefaultAsync(t => t.Slug == slug);
+                .Where(t => t.Slug == slug)
+                .Select(t => new { t.Id, t.Name })
+                .FirstOrDefaultAsync();
+            
             if (tag == null) return NotFound();
-            var contents = tag.ContentTags.Select(ct => ct.Content)
-                .OrderByDescending(c => c.CreatedAt).ToList();
+
+            var contents = await (from ct in _context.ContentTags
+                                join c in _context.Contents on ct.ContentId equals c.Id
+                                join a in _context.Users on c.AuthorId equals a.Id
+                                where ct.TagId == tag.Id
+                                orderby c.CreatedAt descending
+                                select new Content
+                                {
+                                    Id = c.Id,
+                                    Title = c.Title,
+                                    Slug = c.Slug,
+                                    Body = c.Body,
+                                    ThumbnailUrl = c.ThumbnailUrl,
+                                    AuthorId = c.AuthorId,
+                                    Category = c.Category,
+                                    CreatedAt = c.CreatedAt,
+                                    ViewCount = c.ViewCount,
+                                    Author = new ApplicationUser
+                                    {
+                                        Id = a.Id,
+                                        FirstName = a.FirstName,
+                                        LastName = a.LastName,
+                                        UserName = a.UserName
+                                    }
+                                }).ToListAsync();
+
             ViewBag.TagName = tag.Name;
             return View("ByTag", contents);
         }

@@ -9,7 +9,6 @@
 
 @{
     ViewData["Title"] = Model.Title;
-    // ดึงข่าวอื่นๆ (mock, สมมติ ViewBag.OtherNews มีข้อมูล)
     var otherNews = ViewBag.OtherNews as List<Content> ?? new List<Content>();
     var isFavorite = ViewBag.IsFavorite as bool? ?? false;
 }
@@ -34,7 +33,6 @@
 }
 
 <div class="container mx-auto px-4 py-8 flex flex-col items-center">
-    <!-- Breadcrumb -->
     <div class="text-sm breadcrumbs mb-4 w-full max-w-3xl">
         <ul>
             <li><a href="/">หน้าหลัก</a></li>
@@ -44,9 +42,7 @@
     </div>
 
     <article class="w-full max-w-3xl mx-auto">
-        <!-- Title -->
         <h1 class="text-3xl md:text-4xl font-extrabold leading-tight mb-4">@Model.Title</h1>
-        <!-- Favorite Button -->
         @if (User.Identity.IsAuthenticated)
         {
             <div class="mb-4">
@@ -64,25 +60,20 @@
                 }
             </div>
         }
-        <!-- Meta -->
         <div class="flex flex-wrap gap-4 items-center text-gray-500 text-sm mb-6">
             <span class="inline-flex items-center gap-1"><span class="badge badge-primary">@Model.Category</span></span>
             <span class="inline-flex items-center gap-1"><i class="bi bi-calendar"></i> @Model.CreatedAt.ToString("dd MMM yyyy")</span>
             <span class="inline-flex items-center gap-1"><i class="bi bi-person-circle"></i> @(Model.Author?.FirstName ?? "-") @(Model.Author?.LastName ?? "")</span>
         </div>
-        <!-- Image -->
         @if (!string.IsNullOrEmpty(Model.ThumbnailUrl))
         {
             <div class="w-full mb-8 rounded-xl overflow-hidden bg-gray-100 flex justify-center">
                 <img src="@Model.ThumbnailUrl" alt="@Model.Title" class="object-cover w-full max-h-[420px]" />
             </div>
         }
-        <!-- Body -->
         <div class="prose max-w-none mb-8 text-lg leading-relaxed">
             @Html.Raw(ToHtmlNewLine(Model.Body ?? string.Empty))
         </div>
-        <!-- Special blocks -->
-        <!-- Tags -->
         <div class="mt-8 flex flex-wrap gap-2 items-center">
             <span class="text-gray-500 text-xs">แท็ก:</span>
             @if (Model.ContentTags != null)
@@ -95,10 +86,8 @@
         </div>
     </article>
 
-    <!-- Divider ข่าวอื่นๆ -->
     <div class="divider my-10 font-semibold text-lg">ข่าวอื่นๆ</div>
 
-    <!-- ข่าวอื่นๆ (Card เล็ก) -->
     <div class="w-full max-w-3xl grid grid-cols-1 md:grid-cols-3 gap-6">
         @if (otherNews.Any())
         {

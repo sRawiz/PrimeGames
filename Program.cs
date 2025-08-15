@@ -17,11 +17,20 @@ builder.Services.AddDefaultIdentity<cleanNETCoreMVC.Models.ApplicationUser>(opti
     .AddEntityFrameworkStores<ApplicationDbContext>();
 builder.Services.AddControllersWithViews();
 
-builder.Services.AddScoped<IBlobStorageService, BlobStorageService>();
+// Configure storage service based on environment
+if (builder.Environment.IsDevelopment())
+{
+    builder.Services.AddScoped<IBlobStorageService, cleanNETCoreMVC.Services.LocalFileStorageService>();
+}
+else
+{
+    builder.Services.AddScoped<IBlobStorageService, BlobStorageService>();
+}
+
+builder.Services.AddScoped<cleanNETCoreMVC.Services.IImageProcessingService, cleanNETCoreMVC.Services.ImageProcessingService>();
 
 var app = builder.Build();
 
-// Auto-migrate database on startup
 using (var scope = app.Services.CreateScope())
 {
     try

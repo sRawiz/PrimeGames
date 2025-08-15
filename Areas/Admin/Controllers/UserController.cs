@@ -8,6 +8,7 @@ using System.Linq;
 using System.Collections.Generic;
 using Microsoft.AspNetCore.Http;
 using System;
+using System.Transactions;
 
 namespace cleanNETCoreMVC.Areas.Admin.Controllers
 {
@@ -16,21 +17,35 @@ namespace cleanNETCoreMVC.Areas.Admin.Controllers
     public class UserController : Controller
     {
         private readonly UserManager<ApplicationUser> _userManager;
-        public UserController(UserManager<ApplicationUser> userManager)
+        private readonly ILogger<UserController> _logger;
+
+        public UserController(UserManager<ApplicationUser> userManager, ILogger<UserController> logger)
         {
             _userManager = userManager;
+            _logger = logger;
         }
 
-        public IActionResult Index()
+        public async Task<IActionResult> Index()
         {
-            var users = _userManager.Users.ToList();
-            var userVMs = new List<UserWithRolesVM>();
-            foreach (var user in users)
+            try
             {
-                var roles = _userManager.GetRolesAsync(user).Result;
-                userVMs.Add(new UserWithRolesVM { User = user, Roles = roles });
+                var users = await _userManager.Users.ToListAsync();
+                var userVMs = new List<UserWithRolesVM>();
+                
+                foreach (var user in users)
+                {
+                    var roles = await _userManager.GetRolesAsync(user);
+                    userVMs.Add(new UserWithRolesVM { User = user, Roles = roles });
+                }
+                
+                _logger.LogInformation("Successfully loaded {UserCount} users for admin view", users.Count);
+                return View(userVMs);
             }
-            return View(userVMs);
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error loading users for admin view");
+                return View(new List<UserWithRolesVM>());
+            }
         }
 
         public async Task<IActionResult> Details(string id)
@@ -99,16 +114,18 @@ namespace cleanNETCoreMVC.Areas.Admin.Controllers
         {
             if (id == null)
             {
-                Console.WriteLine("[EditModal] id is null");
+                _logger.LogWarning("EditModal called with null id");
                 return NotFound();
             }
-            Console.WriteLine($"[EditModal] id: {id}");
+            
+            _logger.LogDebug("EditModal called for user ID: {UserId}", id);
             var user = await _userManager.FindByIdAsync(id);
             if (user == null)
             {
-                Console.WriteLine($"[EditModal] user not found for id: {id}");
+                _logger.LogWarning("User not found for EditModal with ID: {UserId}", id);
                 return NotFound();
             }
+            
             var roles = await _userManager.GetRolesAsync(user);
             ViewBag.CurrentRole = roles.FirstOrDefault() ?? "User";
             return PartialView("_EditPartial", user);
@@ -124,70 +141,227 @@ namespace cleanNETCoreMVC.Areas.Admin.Controllers
         [HttpPost]
         public async Task<IActionResult> CreateAjax(IFormCollection form)
         {
-            var user = new ApplicationUser
+            var adminUserId = _userManager.GetUserId(User);
+            _logger.LogInformation("Admin {AdminUserId} attempting to create user: {UserName}", 
+                adminUserId, form["UserName"].ToString());
+
+            try
             {
-                UserName = form["UserName"],
-                FirstName = form["FirstName"],
-                LastName = form["LastName"],
-                Email = form["Email"],
-                PhoneNumber = form["PhoneNumber"],
-                EmailConfirmed = true
-            };
-            user.CreatedAt = DateTime.Now;
-            if (!string.IsNullOrWhiteSpace(form["Birthdate"]))
-            {
-                if (DateTime.TryParse(form["Birthdate"], out var birthdate))
-                    user.Birthdate = birthdate;
+                var user = new ApplicationUser
+                {
+                    UserName = form["UserName"].ToString(),
+                    FirstName = form["FirstName"].ToString(),
+                    LastName = form["LastName"].ToString(),
+                    Email = form["Email"].ToString(),
+                    PhoneNumber = form["PhoneNumber"].ToString(),
+                    EmailConfirmed = true,
+                    CreatedAt = DateTime.Now
+                };
+
+                if (!string.IsNullOrWhiteSpace(form["Birthdate"]))
+                {
+                    if (DateTime.TryParse(form["Birthdate"], out var birthdate))
+                        user.Birthdate = birthdate;
+                }
+
+                var password = form["Password"].ToString();
+                var role = form["Role"].ToString();
+
+                using var transactionScope = new TransactionScope(TransactionScopeAsyncFlowOption.Enabled);
+                try
+                {
+                    _logger.LogDebug("Starting user creation transaction for: {UserName}", user.UserName);
+
+                    var result = await _userManager.CreateAsync(user, string.IsNullOrEmpty(password) ? string.Empty : password);
+                    if (!result.Succeeded)
+                    {
+                        _logger.LogWarning("User creation failed for {UserName}. Errors: {Errors}", 
+                            user.UserName, string.Join("; ", result.Errors.Select(e => e.Description)));
+                        return Json(new { success = false, errors = result.Errors.Select(e => e.Description).ToList() });
+                    }
+
+                    _logger.LogInformation("User created successfully: {UserName} with ID: {UserId}", 
+                        user.UserName, user.Id);
+
+                    if (!string.IsNullOrEmpty(role))
+                    {
+                        var roleResult = await _userManager.AddToRoleAsync(user, role);
+                        if (!roleResult.Succeeded)
+                        {
+                            _logger.LogError("Failed to add role {Role} to user {UserName}. Errors: {Errors}", 
+                                role, user.UserName, string.Join("; ", roleResult.Errors.Select(e => e.Description)));
+                            return Json(new { success = false, errors = roleResult.Errors.Select(e => e.Description).ToList() });
+                        }
+
+                        _logger.LogInformation("Successfully added role {Role} to user {UserName}", role, user.UserName);
+                    }
+
+                    transactionScope.Complete();
+                    _logger.LogInformation("User creation transaction completed successfully for {UserName} by admin {AdminUserId}", 
+                        user.UserName, adminUserId);
+
+                    return Json(new { success = true });
+                }
+                catch (Exception ex)
+                {
+                    _logger.LogError(ex, "Transaction failed during user creation for {UserName} by admin {AdminUserId}", 
+                        user.UserName, adminUserId);
+                    return Json(new { success = false, errors = new[] { "เกิดข้อผิดพลาดในการสร้างผู้ใช้ กรุณาลองใหม่อีกครั้ง" } });
+                }
             }
-            var password = form["Password"].ToString();
-            var role = form["Role"].ToString();
-            var result = await _userManager.CreateAsync(user, string.IsNullOrEmpty(password) ? string.Empty : password);
-            if (result.Succeeded)
+            catch (Exception ex)
             {
-                if (!string.IsNullOrEmpty(role)) await _userManager.AddToRoleAsync(user, role);
-                return Json(new { success = true });
+                _logger.LogError(ex, "Unexpected error during user creation by admin {AdminUserId}", adminUserId);
+                return Json(new { success = false, errors = new[] { "เกิดข้อผิดพลาดที่ไม่คาดคิด กรุณาลองใหม่อีกครั้ง" } });
             }
-            return Json(new { success = false, errors = result.Errors.Select(e => e.Description).ToList() });
         }
         [HttpPost]
         public async Task<IActionResult> EditAjax(IFormCollection form)
         {
             var id = form["Id"].ToString();
-            if (string.IsNullOrEmpty(id)) return Json(new { success = false, error = "ไม่พบผู้ใช้" });
-            var dbUser = await _userManager.FindByIdAsync(id);
-            if (dbUser == null) return Json(new { success = false, error = "ไม่พบผู้ใช้" });
-            dbUser.FirstName = form["FirstName"];
-            dbUser.LastName = form["LastName"];
-            dbUser.Birthdate = !string.IsNullOrWhiteSpace(form["Birthdate"]) && DateTime.TryParse(form["Birthdate"], out var birthdate) ? birthdate : (DateTime?)null;
-            dbUser.Email = form["Email"];
-            dbUser.PhoneNumber = form["PhoneNumber"];
-            var result = await _userManager.UpdateAsync(dbUser);
-            if (!result.Succeeded) return Json(new { success = false, errors = result.Errors.Select(e => e.Description).ToList() });
-            var password = form["Password"].ToString();
-            if (!string.IsNullOrEmpty(password))
+            var adminUserId = _userManager.GetUserId(User);
+            
+            _logger.LogInformation("Admin {AdminUserId} attempting to edit user ID: {UserId}", adminUserId, id);
+
+            if (string.IsNullOrEmpty(id))
             {
-                var token = await _userManager.GeneratePasswordResetTokenAsync(dbUser);
-                var passResult = await _userManager.ResetPasswordAsync(dbUser, token, password);
-                if (!passResult.Succeeded) return Json(new { success = false, errors = passResult.Errors.Select(e => e.Description).ToList() });
+                _logger.LogWarning("Edit user request with empty ID by admin {AdminUserId}", adminUserId);
+                return Json(new { success = false, error = "ไม่พบผู้ใช้" });
             }
-            var role = form["Role"].ToString();
-            var roles = await _userManager.GetRolesAsync(dbUser);
-            if (!string.IsNullOrEmpty(role) && !(roles?.Contains(role ?? string.Empty) ?? false))
+
+            try
             {
-                if (roles != null && roles.Count > 0)
-                    await _userManager.RemoveFromRolesAsync(dbUser, roles);
-                await _userManager.AddToRoleAsync(dbUser, role ?? string.Empty);
+                var dbUser = await _userManager.FindByIdAsync(id);
+                if (dbUser == null)
+                {
+                    _logger.LogWarning("User not found for edit. ID: {UserId} by admin {AdminUserId}", id, adminUserId);
+                    return Json(new { success = false, error = "ไม่พบผู้ใช้" });
+                }
+
+                var password = form["Password"].ToString();
+                var role = form["Role"].ToString();
+
+                using var transactionScope = new TransactionScope(TransactionScopeAsyncFlowOption.Enabled);
+                try
+                {
+                    _logger.LogDebug("Starting user edit transaction for ID: {UserId}", id);
+
+                    // Update basic user information
+                    dbUser.FirstName = form["FirstName"].ToString();
+                    dbUser.LastName = form["LastName"].ToString();
+                    dbUser.Birthdate = !string.IsNullOrWhiteSpace(form["Birthdate"]) && DateTime.TryParse(form["Birthdate"], out var birthdate) ? birthdate : (DateTime?)null;
+                    dbUser.Email = form["Email"].ToString();
+                    dbUser.PhoneNumber = form["PhoneNumber"].ToString();
+
+                    var result = await _userManager.UpdateAsync(dbUser);
+                    if (!result.Succeeded)
+                    {
+                        _logger.LogWarning("User update failed for ID: {UserId}. Errors: {Errors}", 
+                            id, string.Join("; ", result.Errors.Select(e => e.Description)));
+                        return Json(new { success = false, errors = result.Errors.Select(e => e.Description).ToList() });
+                    }
+
+                    _logger.LogInformation("User basic info updated successfully for ID: {UserId}", id);
+
+                    // Update password if provided
+                    if (!string.IsNullOrEmpty(password))
+                    {
+                        var token = await _userManager.GeneratePasswordResetTokenAsync(dbUser);
+                        var passResult = await _userManager.ResetPasswordAsync(dbUser, token, password);
+                        if (!passResult.Succeeded)
+                        {
+                            _logger.LogError("Password reset failed for user ID: {UserId}. Errors: {Errors}", 
+                                id, string.Join("; ", passResult.Errors.Select(e => e.Description)));
+                            return Json(new { success = false, errors = passResult.Errors.Select(e => e.Description).ToList() });
+                        }
+
+                        _logger.LogInformation("Password updated successfully for user ID: {UserId}", id);
+                    }
+
+                    // Update roles if provided
+                    var roles = await _userManager.GetRolesAsync(dbUser);
+                    if (!string.IsNullOrEmpty(role) && !(roles?.Contains(role ?? string.Empty) ?? false))
+                    {
+                        if (roles != null && roles.Count > 0)
+                        {
+                            var removeResult = await _userManager.RemoveFromRolesAsync(dbUser, roles);
+                            if (!removeResult.Succeeded)
+                            {
+                                _logger.LogError("Failed to remove existing roles from user ID: {UserId}. Errors: {Errors}", 
+                                    id, string.Join("; ", removeResult.Errors.Select(e => e.Description)));
+                                return Json(new { success = false, errors = removeResult.Errors.Select(e => e.Description).ToList() });
+                            }
+
+                            _logger.LogInformation("Removed existing roles from user ID: {UserId}. Roles: {Roles}", 
+                                id, string.Join(", ", roles));
+                        }
+
+                        var addResult = await _userManager.AddToRoleAsync(dbUser, role ?? string.Empty);
+                        if (!addResult.Succeeded)
+                        {
+                            _logger.LogError("Failed to add role {Role} to user ID: {UserId}. Errors: {Errors}", 
+                                role, id, string.Join("; ", addResult.Errors.Select(e => e.Description)));
+                            return Json(new { success = false, errors = addResult.Errors.Select(e => e.Description).ToList() });
+                        }
+
+                        _logger.LogInformation("Successfully added role {Role} to user ID: {UserId}", role, id);
+                    }
+
+                    transactionScope.Complete();
+                    _logger.LogInformation("User edit transaction completed successfully for ID: {UserId} by admin {AdminUserId}", 
+                        id, adminUserId);
+
+                    return Json(new { success = true });
+                }
+                catch (Exception ex)
+                {
+                    _logger.LogError(ex, "Transaction failed during user edit for ID: {UserId} by admin {AdminUserId}", 
+                        id, adminUserId);
+                    return Json(new { success = false, errors = new[] { "เกิดข้อผิดพลาดในการแก้ไขข้อมูลผู้ใช้ กรุณาลองใหม่อีกครั้ง" } });
+                }
             }
-            return Json(new { success = true });
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Unexpected error during user edit for ID: {UserId} by admin {AdminUserId}", 
+                    id, adminUserId);
+                return Json(new { success = false, errors = new[] { "เกิดข้อผิดพลาดที่ไม่คาดคิด กรุณาลองใหม่อีกครั้ง" } });
+            }
         }
         [HttpPost]
         public async Task<IActionResult> DeleteAjax(string id)
         {
-            var user = await _userManager.FindByIdAsync(id);
-            if (user == null) return Json(new { success = false, error = "ไม่พบผู้ใช้" });
-            var result = await _userManager.DeleteAsync(user);
-            if (result.Succeeded) return Json(new { success = true });
-            return Json(new { success = false, errors = result.Errors.Select(e => e.Description).ToList() });
+            var adminUserId = _userManager.GetUserId(User);
+            _logger.LogInformation("Admin {AdminUserId} attempting to delete user ID: {UserId}", adminUserId, id);
+
+            try
+            {
+                var user = await _userManager.FindByIdAsync(id);
+                if (user == null)
+                {
+                    _logger.LogWarning("User not found for deletion. ID: {UserId} by admin {AdminUserId}", id, adminUserId);
+                    return Json(new { success = false, error = "ไม่พบผู้ใช้" });
+                }
+
+                _logger.LogInformation("Found user to delete: ID: {UserId}, UserName: {UserName}", id, user.UserName);
+
+                var result = await _userManager.DeleteAsync(user);
+                if (result.Succeeded)
+                {
+                    _logger.LogInformation("Successfully deleted user: ID: {UserId}, UserName: {UserName} by admin {AdminUserId}", 
+                        id, user.UserName, adminUserId);
+                    return Json(new { success = true });
+                }
+
+                _logger.LogWarning("User deletion failed for ID: {UserId}. Errors: {Errors}", 
+                    id, string.Join("; ", result.Errors.Select(e => e.Description)));
+                return Json(new { success = false, errors = result.Errors.Select(e => e.Description).ToList() });
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Unexpected error during user deletion for ID: {UserId} by admin {AdminUserId}", 
+                    id, adminUserId);
+                return Json(new { success = false, errors = new[] { "เกิดข้อผิดพลาดในการลบผู้ใช้ กรุณาลองใหม่อีกครั้ง" } });
+            }
         }
     }
 

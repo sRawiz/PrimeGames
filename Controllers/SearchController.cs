@@ -12,8 +12,6 @@ namespace cleanNETCoreMVC.Controllers
         {
             _context = context;
         }
-
-        // GET: /Search?query=xxx
         public IActionResult Index(string query)
         {
             var results = string.IsNullOrWhiteSpace(query)

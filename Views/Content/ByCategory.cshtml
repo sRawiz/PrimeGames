@@ -24,14 +24,12 @@
     var pagedNews = filteredNews.Skip((page - 1) * pageSize).Take(pageSize).ToList();
 }
 <div class="container mx-auto px-4 py-8">
-    <!-- Breadcrumb -->
     <div class="text-sm breadcrumbs mb-4">
         <ul>
             <li><a href="/">หน้าหลัก</a></li>
             <li>หมวดหมู่ : <span class="font-bold">&nbsp;@category</span></li>
         </ul>
     </div>
-    <!-- Filter by Date -->
     <form method="get" class="mb-6 flex flex-wrap gap-2 items-center bg-base-100 p-4 rounded-xl shadow">
         <span class="font-semibold">กรองวันที่:</span>
         <input type="date" name="start" class="input input-bordered" value="@startDate" />
@@ -43,7 +41,6 @@
             <a href="?" class="btn btn-ghost btn-sm">ล้าง</a>
         }
     </form>
-    <!-- Title -->
     <h1 class="text-3xl font-bold mb-6">@ViewData["Title"]</h1>
     <div class="flex flex-col gap-6">
         @foreach (var item in pagedNews)
@@ -82,7 +79,6 @@
             </div>
         }
     </div>
-    <!-- Pagination -->
     @if (totalFiltered > pageSize)
     {
         <div class="mt-8 flex justify-center">
